@@ -1,0 +1,176 @@
+# DBaaS Platform Backend Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dbaas-backend
+  namespace: dbaas-system
+  labels:
+    app: dbaas-backend
+    component: api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: dbaas-backend
+  template:
+    metadata:
+      labels:
+        app: dbaas-backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3000"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: backend
+        image: dbaas/backend:latest
+        ports:
+        - containerPort: 3000
+          name: http
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "3000"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: database-url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: redis-url
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: jwt-secret
+        - name: KUBERNETES_NAMESPACE
+          value: "dbaas-databases"
+        volumeMounts:
+        - name: kubeconfig
+          mountPath: /etc/kubernetes
+          readOnly: true
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 30
+      volumes:
+      - name: kubeconfig
+        secret:
+          secretName: kubeconfig-secret
+      serviceAccountName: dbaas-backend
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dbaas-backend
+  namespace: dbaas-system
+  labels:
+    app: dbaas-backend
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3000
+    targetPort: 3000
+    name: http
+  selector:
+    app: dbaas-backend
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dbaas-backend
+  namespace: dbaas-system
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: dbaas-backend
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "persistentvolumeclaims", "secrets", "configmaps"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "statefulsets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["storage.k8s.io"]
+  resources: ["storageclasses"]
+  verbs: ["get", "list"]
+- apiGroups: ["autoscaling"]
+  resources: ["horizontalpodautoscalers"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: dbaas-backend
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: dbaas-backend
+subjects:
+- kind: ServiceAccount
+  name: dbaas-backend
+  namespace: dbaas-system
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secrets
+  namespace: dbaas-system
+type: Opaque
+data:
+  database-url: cG9zdGdyZXNxbDovL2RiYWFzX3VzZXI6c2VjdXJlX3Bhc3N3b3JkQHBvc3RncmVzcWw6NTQzMi9kYmFhc19wbGF0Zm9ybQ==  # postgresql://dbaas_user:secure_password@postgresql:5432/dbaas_platform
+  redis-url: cmVkaXM6Ly9yZWRpczozNjc5  # redis://redis:6379
+  jwt-secret: c3VwZXJfc2VjdXJlX2p3dF9zZWNyZXRfa2V5XzIwMjQ=  # super_secure_jwt_secret_key_2024
+
+---
+# Horizontal Pod Autoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: dbaas-backend-hpa
+  namespace: dbaas-system
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: dbaas-backend
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80

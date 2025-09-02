@@ -1,0 +1,147 @@
+# DBaaS Platform Frontend Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dbaas-frontend
+  namespace: dbaas-system
+  labels:
+    app: dbaas-frontend
+    component: ui
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: dbaas-frontend
+  template:
+    metadata:
+      labels:
+        app: dbaas-frontend
+    spec:
+      containers:
+      - name: frontend
+        image: dbaas/frontend:latest
+        ports:
+        - containerPort: 80
+          name: http
+        env:
+        - name: VITE_API_URL
+          value: "http://dbaas-backend:3000"
+        - name: VITE_GRAFANA_URL
+          value: "http://grafana:3000"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+          limits:
+            memory: "512Mi"
+            cpu: "200m"
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 15
+          periodSeconds: 30
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dbaas-frontend
+  namespace: dbaas-system
+  labels:
+    app: dbaas-frontend
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 80
+    name: http
+  selector:
+    app: dbaas-frontend
+
+---
+# Ingress for external access
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dbaas-ingress
+  namespace: dbaas-system
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - dbaas.yourdomain.com
+    secretName: dbaas-tls
+  rules:
+  - host: dbaas.yourdomain.com
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: dbaas-backend
+            port:
+              number: 3000
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: dbaas-frontend
+            port:
+              number: 80
+
+---
+# Network Policy for security
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: dbaas-network-policy
+  namespace: dbaas-system
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: dbaas-system
+    - namespaceSelector:
+        matchLabels:
+          name: dbaas-monitoring
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: dbaas-system
+    - namespaceSelector:
+        matchLabels:
+          name: dbaas-databases
+    - namespaceSelector:
+        matchLabels:
+          name: dbaas-monitoring
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 53
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 443
+    - protocol: TCP
+      port: 80

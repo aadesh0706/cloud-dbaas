@@ -1,0 +1,220 @@
+# Default values for dbaas-platform
+# This is a YAML-formatted file
+
+# Global configuration
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  storageClass: "fast-ssd"
+
+# Backend configuration
+backend:
+  enabled: true
+  image:
+    repository: dbaas/backend
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  
+  replicaCount: 3
+  
+  service:
+    type: ClusterIP
+    port: 3000
+  
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 1Gi
+      cpu: 500m
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  
+  env:
+    NODE_ENV: "production"
+    PORT: "3000"
+  
+  secrets:
+    databaseUrl: ""
+    redisUrl: ""
+    jwtSecret: ""
+
+# Frontend configuration
+frontend:
+  enabled: true
+  image:
+    repository: dbaas/frontend
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  
+  replicaCount: 2
+  
+  service:
+    type: ClusterIP
+    port: 80
+  
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 50m
+    limits:
+      memory: 512Mi
+      cpu: 200m
+  
+  env:
+    VITE_API_URL: "http://dbaas-backend:3000"
+    VITE_GRAFANA_URL: "http://grafana:3000"
+
+# PostgreSQL configuration
+postgresql:
+  enabled: true
+  image:
+    repository: postgres
+    tag: "15-alpine"
+  
+  auth:
+    database: "dbaas_platform"
+    username: "dbaas_user"
+    password: "secure_password"
+  
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: ""
+  
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 250m
+    limits:
+      memory: 2Gi
+      cpu: 1000m
+
+# Redis configuration
+redis:
+  enabled: true
+  image:
+    repository: redis
+    tag: "7-alpine"
+  
+  persistence:
+    enabled: true
+    size: 5Gi
+    storageClass: ""
+  
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 1Gi
+      cpu: 500m
+
+# Monitoring configuration
+monitoring:
+  enabled: true
+  
+  prometheus:
+    enabled: true
+    persistence:
+      enabled: true
+      size: 50Gi
+    
+    resources:
+      requests:
+        memory: 1Gi
+        cpu: 250m
+      limits:
+        memory: 2Gi
+        cpu: 500m
+  
+  grafana:
+    enabled: true
+    adminPassword: "grafanaadmin"
+    persistence:
+      enabled: true
+      size: 10Gi
+    
+    resources:
+      requests:
+        memory: 512Mi
+        cpu: 100m
+      limits:
+        memory: 1Gi
+        cpu: 300m
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  
+  hosts:
+    - host: dbaas.yourdomain.com
+      paths:
+        - path: /api
+          pathType: Prefix
+          service: dbaas-backend
+        - path: /
+          pathType: Prefix
+          service: dbaas-frontend
+  
+  tls:
+    - secretName: dbaas-tls
+      hosts:
+        - dbaas.yourdomain.com
+
+# Security configuration
+security:
+  networkPolicy:
+    enabled: true
+  
+  podSecurityPolicy:
+    enabled: false
+  
+  serviceAccount:
+    create: true
+    annotations: {}
+    name: ""
+
+# Resource quotas and limits
+resources:
+  quotas:
+    enabled: true
+    system:
+      requests:
+        cpu: "4"
+        memory: 8Gi
+      limits:
+        cpu: "8"
+        memory: 16Gi
+    databases:
+      requests:
+        cpu: "20"
+        memory: 40Gi
+      limits:
+        cpu: "40"
+        memory: 80Gi
+  
+  limits:
+    enabled: true
+    default:
+      cpu: "500m"
+      memory: "1Gi"
+    defaultRequest:
+      cpu: "100m"
+      memory: "256Mi"
+
+# Node selector and tolerations
+nodeSelector: {}
+tolerations: []
+affinity: {}

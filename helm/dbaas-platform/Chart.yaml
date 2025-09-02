@@ -1,0 +1,30 @@
+# Helm Chart for DBaaS Platform
+apiVersion: v2
+name: dbaas-platform
+description: A Helm chart for Cloud-Based Multi-Engine Database-as-a-Service Platform
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - database
+  - dbaas
+  - kubernetes
+  - postgresql
+  - redis
+  - monitoring
+home: https://github.com/your-org/cloud-dbaas-platform
+sources:
+  - https://github.com/your-org/cloud-dbaas-platform
+maintainers:
+  - name: DBaaS Team
+    email: dbaas-team@yourcompany.com
+
+dependencies:
+  - name: prometheus
+    version: "15.x.x"
+    repository: "https://prometheus-community.github.io/helm-charts"
+    condition: monitoring.prometheus.enabled
+  - name: grafana
+    version: "6.x.x"
+    repository: "https://grafana.github.io/helm-charts"
+    condition: monitoring.grafana.enabled

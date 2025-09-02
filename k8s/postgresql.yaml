@@ -1,0 +1,183 @@
+# PostgreSQL StatefulSet for DBaaS Platform
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgresql
+  namespace: dbaas-system
+  labels:
+    app: postgresql
+    component: database
+spec:
+  serviceName: postgresql
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgresql
+  template:
+    metadata:
+      labels:
+        app: postgresql
+    spec:
+      containers:
+      - name: postgresql
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+          name: postgres
+        env:
+        - name: POSTGRES_DB
+          value: "dbaas_platform"
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-secret
+              key: username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-secret
+              key: password
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        - name: init-scripts
+          mountPath: /docker-entrypoint-initdb.d
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - $(POSTGRES_USER)
+            - -d
+            - $(POSTGRES_DB)
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - $(POSTGRES_USER)
+            - -d
+            - $(POSTGRES_DB)
+          initialDelaySeconds: 45
+          periodSeconds: 30
+      volumes:
+      - name: init-scripts
+        configMap:
+          name: postgresql-init
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-storage
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi
+      storageClassName: fast-ssd
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgresql
+  namespace: dbaas-system
+  labels:
+    app: postgresql
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5432
+    targetPort: 5432
+    name: postgres
+  selector:
+    app: postgresql
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgresql-secret
+  namespace: dbaas-system
+type: Opaque
+data:
+  username: ZGJhYXNfdXNlcg==  # dbaas_user
+  password: c2VjdXJlX3Bhc3N3b3Jk  # secure_password
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgresql-init
+  namespace: dbaas-system
+data:
+  init-db.sql: |
+    -- Initialize DBaaS Platform Database Schema
+    
+    -- Users table
+    CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        first_name VARCHAR(100),
+        last_name VARCHAR(100),
+        role VARCHAR(50) DEFAULT 'user',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    
+    -- Projects table
+    CREATE TABLE IF NOT EXISTS projects (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    
+    -- Databases table
+    CREATE TABLE IF NOT EXISTS databases (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        engine VARCHAR(50) NOT NULL,
+        version VARCHAR(50) NOT NULL,
+        status VARCHAR(50) DEFAULT 'provisioning',
+        connection_string TEXT,
+        project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        resource_config JSONB,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    
+    -- Database metrics table
+    CREATE TABLE IF NOT EXISTS database_metrics (
+        id SERIAL PRIMARY KEY,
+        database_id INTEGER REFERENCES databases(id) ON DELETE CASCADE,
+        metric_name VARCHAR(100) NOT NULL,
+        metric_value DECIMAL(10,4) NOT NULL,
+        unit VARCHAR(20),
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    
+    -- Create indexes for better performance
+    CREATE INDEX IF NOT EXISTS idx_databases_user_id ON databases(user_id);
+    CREATE INDEX IF NOT EXISTS idx_databases_project_id ON databases(project_id);
+    CREATE INDEX IF NOT EXISTS idx_database_metrics_database_id ON database_metrics(database_id);
+    CREATE INDEX IF NOT EXISTS idx_database_metrics_timestamp ON database_metrics(timestamp);
+    
+    -- Insert default admin user (password: admin123)
+    INSERT INTO users (email, password_hash, first_name, last_name, role) 
+    VALUES ('admin@dbaas.local', '$2b$10$8.4Vq0Qb7FGGfvgOhV8Ote4ZJ8zQ3Y8xK9V6Y.5jgFGGfvgOhV8O', 'Admin', 'User', 'admin')
+    ON CONFLICT (email) DO NOTHING;
