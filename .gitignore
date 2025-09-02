@@ -16,7 +16,6 @@ yarn-error.log*
 frontend/dist/
 backend/logs/
 *.log
-
 # IDE and editor files
 .vscode/
 .idea/
