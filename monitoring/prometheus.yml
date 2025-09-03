@@ -15,7 +15,7 @@ scrape_configs:
   # DBaaS Backend API metrics
   - job_name: 'dbaas-backend'
     static_configs:
-      - targets: ['backend:3000']
+      - targets: ['backend:5000']
     metrics_path: '/metrics'
     scrape_interval: 30s
 

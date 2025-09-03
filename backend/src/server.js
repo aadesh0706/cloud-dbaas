@@ -11,6 +11,7 @@ const monitoringRoutes = require('./routes/monitoring');
 const projectRoutes = require('./routes/projects');
 
 const errorHandler = require('./middleware/errorHandler');
+const { register, metricsMiddleware } = require('./middleware/prometheus');
 const logger = require('./utils/logger');
 
 const app = express();
@@ -30,7 +31,10 @@ const limiter = rateLimit({
   max: 100, // limit each IP to 100 requests per windowMs
   message: 'Too many requests from this IP, please try again later.'
 });
-app.use(limiter);
+//app.use(limiter);
+
+// Prometheus metrics middleware
+app.use(metricsMiddleware);
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -40,6 +44,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use(morgan('combined', {
   stream: { write: message => logger.info(message.trim()) }
 }));
+
+// Metrics endpoint for Prometheus
+app.get('/metrics', async (req, res) => {
+  res.set('Content-Type', register.contentType);
+  res.end(await register.metrics());
+});
 
 // Health check endpoint
 app.get('/health', (req, res) => {
