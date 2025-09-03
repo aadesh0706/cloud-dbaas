@@ -651,6 +651,299 @@ storage:
     return connectionStrings[engine] || '';
   }
 
+  // Create database connection for schema inspection
+  async createDatabaseConnection(database) {
+    const { engine } = database;
+    
+    if (engine === 'mysql') {
+      const mysql = require('mysql2/promise');
+      return await mysql.createConnection({
+        host: process.env.NODE_ENV === 'production' ? `${database.k8s_deployment}-service` : 'mysql-sample',
+        port: 3306,
+        user: 'root',
+        password: process.env.MYSQL_ROOT_PASSWORD || 'rootpassword',
+        database: database.name
+      });
+    } else if (engine === 'postgresql') {
+      const { Client } = require('pg');
+      const client = new Client({
+        host: process.env.NODE_ENV === 'production' ? `${database.k8s_deployment}-service` : 'postgres',
+        port: 5432,
+        user: process.env.POSTGRES_USER || 'postgres',
+        password: process.env.POSTGRES_PASSWORD || 'password',
+        database: database.name
+      });
+      await client.connect();
+      return client;
+    } else if (engine === 'mongodb') {
+      const { MongoClient } = require('mongodb');
+      const host = process.env.NODE_ENV === 'production' ? `${database.k8s_deployment}-service` : 'mongo-sample';
+      const uri = `mongodb://${process.env.MONGO_INITDB_ROOT_USERNAME || 'mongo'}:${process.env.MONGO_INITDB_ROOT_PASSWORD || 'mongo123'}@${host}:27017/${database.name}?authSource=admin`;
+      const client = new MongoClient(uri);
+      await client.connect();
+      return client;
+    }
+    
+    throw new Error(`Unsupported database engine: ${engine}`);
+  }
+
+  // Get database schema (tables, collections, etc.)
+  async getDatabaseSchema(database) {
+    let connection;
+    try {
+      connection = await this.createDatabaseConnection(database);
+      const { engine } = database;
+
+      if (engine === 'mysql') {
+        const [tables] = await connection.execute(
+          'SELECT TABLE_NAME as name, TABLE_TYPE as type, ENGINE as engine, ' +
+          'TABLE_ROWS as row_count, CREATE_TIME as created_at ' +
+          'FROM information_schema.TABLES WHERE TABLE_SCHEMA = ?',
+          [database.name]
+        );
+        
+        return {
+          tables: tables || [],
+          totalTables: tables ? tables.length : 0,
+          engine: 'mysql'
+        };
+      } else if (engine === 'postgresql') {
+        const result = await connection.query(
+          `SELECT schemaname, tablename as name, 'BASE TABLE' as type 
+           FROM pg_tables WHERE schemaname = 'public'
+           UNION ALL
+           SELECT schemaname, viewname as name, 'VIEW' as type 
+           FROM pg_views WHERE schemaname = 'public'
+           ORDER BY name`
+        );
+        
+        return {
+          tables: result.rows || [],
+          totalTables: result.rows ? result.rows.length : 0,
+          engine: 'postgresql'
+        };
+      } else if (engine === 'mongodb') {
+        const db = connection.db(database.name);
+        const collections = await db.listCollections().toArray();
+        
+        const tables = await Promise.all(
+          collections.map(async (col) => {
+            try {
+              const collection = db.collection(col.name);
+              const count = await collection.countDocuments();
+              return {
+                name: col.name,
+                type: 'COLLECTION',
+                row_count: count,
+                size: 0 // We'll skip storage size for now to avoid errors
+              };
+            } catch (error) {
+              // If there's an error getting collection stats, return basic info
+              return {
+                name: col.name,
+                type: 'COLLECTION',
+                row_count: 0,
+                size: 0
+              };
+            }
+          })
+        );
+        
+        return {
+          tables: tables,
+          totalTables: tables.length,
+          engine: 'mongodb'
+        };
+      }
+    } catch (error) {
+      logger.error('Get database schema error:', error);
+      throw error;
+    } finally {
+      if (connection) {
+        if (database.engine === 'mysql') {
+          await connection.end();
+        } else if (database.engine === 'postgresql') {
+          await connection.end();
+        } else if (database.engine === 'mongodb') {
+          await connection.close();
+        }
+      }
+    }
+  }
+
+  // Get detailed table information
+  async getTableDetails(database, tableName) {
+    let connection;
+    try {
+      connection = await this.createDatabaseConnection(database);
+      const { engine } = database;
+
+      if (engine === 'mysql') {
+        const [columns] = await connection.execute(
+          `SELECT COLUMN_NAME as name, DATA_TYPE as type, IS_NULLABLE as nullable,
+           COLUMN_DEFAULT as default_value, COLUMN_KEY as key_type, EXTRA as extra
+           FROM information_schema.COLUMNS 
+           WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
+           ORDER BY ORDINAL_POSITION`,
+          [database.name, tableName]
+        );
+
+        const [indexes] = await connection.execute(
+          `SELECT INDEX_NAME as name, COLUMN_NAME as column_name, NON_UNIQUE as non_unique
+           FROM information_schema.STATISTICS 
+           WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
+           ORDER BY INDEX_NAME, SEQ_IN_INDEX`,
+          [database.name, tableName]
+        );
+
+        return {
+          name: tableName,
+          columns: columns || [],
+          indexes: indexes || [],
+          engine: 'mysql'
+        };
+      } else if (engine === 'postgresql') {
+        const columnsResult = await connection.query(
+          `SELECT column_name as name, data_type as type, is_nullable as nullable,
+           column_default as default_value
+           FROM information_schema.columns 
+           WHERE table_schema = 'public' AND table_name = $1
+           ORDER BY ordinal_position`,
+          [tableName]
+        );
+
+        const indexesResult = await connection.query(
+          `SELECT i.relname as name, a.attname as column_name
+           FROM pg_class t, pg_class i, pg_index ix, pg_attribute a
+           WHERE t.oid = ix.indrelid AND i.oid = ix.indexrelid 
+           AND a.attrelid = t.oid AND a.attnum = ANY(ix.indkey) 
+           AND t.relname = $1`,
+          [tableName]
+        );
+
+        return {
+          name: tableName,
+          columns: columnsResult.rows || [],
+          indexes: indexesResult.rows || [],
+          engine: 'postgresql'
+        };
+      } else if (engine === 'mongodb') {
+        const db = connection.db(database.name);
+        const collection = db.collection(tableName);
+        
+        // Get sample documents to infer schema
+        const sampleDocs = await collection.find().limit(10).toArray();
+        const indexes = await collection.indexes();
+        
+        // Infer schema from sample documents
+        const fieldTypes = {};
+        sampleDocs.forEach(doc => {
+          Object.keys(doc).forEach(key => {
+            if (!fieldTypes[key]) {
+              fieldTypes[key] = typeof doc[key];
+            }
+          });
+        });
+        
+        const columns = Object.keys(fieldTypes).map(key => ({
+          name: key,
+          type: fieldTypes[key],
+          nullable: 'YES'
+        }));
+
+        return {
+          name: tableName,
+          columns,
+          indexes: indexes || [],
+          sampleCount: sampleDocs.length,
+          engine: 'mongodb'
+        };
+      }
+    } catch (error) {
+      logger.error('Get table details error:', error);
+      throw error;
+    } finally {
+      if (connection) {
+        if (database.engine === 'mysql') {
+          await connection.end();
+        } else if (database.engine === 'postgresql') {
+          await connection.end();
+        } else if (database.engine === 'mongodb') {
+          await connection.close();
+        }
+      }
+    }
+  }
+
+  // Execute read-only query
+  async executeReadOnlyQuery(database, query, limit = 100) {
+    let connection;
+    try {
+      connection = await this.createDatabaseConnection(database);
+      const { engine } = database;
+
+      if (engine === 'mysql') {
+        const [rows, fields] = await connection.execute(`${query} LIMIT ${limit}`);
+        return {
+          rows: rows || [],
+          columns: fields ? fields.map(f => ({ name: f.name, type: f.type })) : [],
+          rowCount: rows ? rows.length : 0
+        };
+      } else if (engine === 'postgresql') {
+        const result = await connection.query(`${query} LIMIT ${limit}`);
+        return {
+          rows: result.rows || [],
+          columns: result.fields ? result.fields.map(f => ({ name: f.name, type: f.dataTypeID })) : [],
+          rowCount: result.rows ? result.rows.length : 0
+        };
+      } else if (engine === 'mongodb') {
+        // For MongoDB, we'll handle specific query types
+        const db = connection.db(database.name);
+        
+        if (query.toLowerCase().includes('find(')) {
+          // Simple find query parsing (basic implementation)
+          const collectionMatch = query.match(/db\.(\w+)\.find\((.*)\)/);
+          if (collectionMatch) {
+            const [, collectionName, findQuery] = collectionMatch;
+            const collection = db.collection(collectionName);
+            
+            let cursor = collection.find();
+            if (findQuery && findQuery.trim() !== '') {
+              try {
+                const filter = JSON.parse(findQuery);
+                cursor = collection.find(filter);
+              } catch (e) {
+                // If JSON parse fails, use empty filter
+              }
+            }
+            
+            const docs = await cursor.limit(limit).toArray();
+            return {
+              rows: docs,
+              columns: docs.length > 0 ? Object.keys(docs[0]).map(key => ({ name: key, type: typeof docs[0][key] })) : [],
+              rowCount: docs.length
+            };
+          }
+        }
+        
+        throw new Error('Unsupported MongoDB query format. Use: db.collection.find({filter})');
+      }
+    } catch (error) {
+      logger.error('Execute read-only query error:', error);
+      throw error;
+    } finally {
+      if (connection) {
+        if (database.engine === 'mysql') {
+          await connection.end();
+        } else if (database.engine === 'postgresql') {
+          await connection.end();
+        } else if (database.engine === 'mongodb') {
+          await connection.close();
+        }
+      }
+    }
+  }
+
   formatDatabaseResponse(db) {
     return {
       id: db.id,

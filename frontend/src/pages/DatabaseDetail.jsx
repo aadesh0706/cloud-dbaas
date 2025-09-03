@@ -8,13 +8,16 @@ import {
   CpuChipIcon,
   CircleStackIcon,
   ServerIcon,
-  ChartBarIcon
+  ChartBarIcon,
+  TableCellsIcon,
+  DocumentTextIcon
 } from '@heroicons/react/24/outline'
 import { databasesAPI, monitoringAPI } from '../services/api'
 import LoadingSpinner from '../components/LoadingSpinner'
 import MetricCard from '../components/MetricCard'
 import DatabaseMetricsChart from '../components/DatabaseMetricsChart'
 import ConnectionModal from '../components/ConnectionModal'
+import DatabaseSchemaExplorer from '../components/DatabaseSchemaExplorer'
 import toast from 'react-hot-toast'
 
 const DatabaseDetail = () => {
@@ -23,6 +26,7 @@ const DatabaseDetail = () => {
   const queryClient = useQueryClient()
   const [showConnectionModal, setShowConnectionModal] = useState(false)
   const [connectionData, setConnectionData] = useState(null)
+  const [activeTab, setActiveTab] = useState('overview')
 
   // Fetch database details
   const { data: response, isLoading } = useQuery(
@@ -147,7 +151,34 @@ const DatabaseDetail = () => {
         </div>
       </div>
 
-      {/* Status and Basic Info */}
+      {/* Tab Navigation */}
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8">
+          {[
+            { id: 'overview', name: 'Overview', icon: ChartBarIcon },
+            { id: 'schema', name: 'Schema & Data', icon: TableCellsIcon },
+            { id: 'monitoring', name: 'Monitoring', icon: DocumentTextIcon }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`${
+                activeTab === tab.id
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center`}
+            >
+              <tab.icon className="w-4 h-4 mr-2" />
+              {tab.name}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'overview' && (
+        <div className="space-y-6">
+          {/* Status and Basic Info */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="card p-6">
           <div className="text-center">
@@ -184,36 +215,6 @@ const DatabaseDetail = () => {
           color="success"
         />
       </div>
-
-      {/* Real-time Metrics */}
-      {metrics && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <MetricCard
-            title="CPU Usage"
-            value={`${parseFloat(metrics.cpu?.value || 0).toFixed(1)}%`}
-            icon={CpuChipIcon}
-            color="primary"
-          />
-          <MetricCard
-            title="Memory Usage"
-            value={`${parseFloat(metrics.memory?.value || 0).toFixed(1)} MB`}
-            icon={ServerIcon}
-            color="secondary"
-          />
-          <MetricCard
-            title="Active Connections"
-            value={parseInt(metrics.connections?.value || 0)}
-            icon={LinkIcon}
-            color="success"
-          />
-          <MetricCard
-            title="Queries/sec"
-            value={parseFloat(metrics.queries_per_second?.value || 0).toFixed(1)}
-            icon={ChartBarIcon}
-            color="warning"
-          />
-        </div>
-      )}
 
       {/* Performance Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -277,6 +278,66 @@ const DatabaseDetail = () => {
               </div>
             </div>
           )}
+        </div>
+      )}
+        </div>
+      )}
+
+      {/* Schema & Data Tab */}
+      {activeTab === 'schema' && (
+        <div className="space-y-6">
+          <DatabaseSchemaExplorer database={database} />
+        </div>
+      )}
+
+      {/* Monitoring Tab */}
+      {activeTab === 'monitoring' && (
+        <div className="space-y-6">
+          {/* Real-time Metrics */}
+          {metrics && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <MetricCard
+                title="CPU Usage"
+                value={`${parseFloat(metrics.cpu?.value || 0).toFixed(1)}%`}
+                icon={CpuChipIcon}
+                color="primary"
+              />
+              <MetricCard
+                title="Memory Usage"
+                value={`${parseFloat(metrics.memory?.value || 0).toFixed(1)} MB`}
+                icon={ServerIcon}
+                color="secondary"
+              />
+              <MetricCard
+                title="Storage Usage"
+                value={`${parseFloat(metrics.storage?.value || 0).toFixed(1)} GB`}
+                icon={CircleStackIcon}
+                color="success"
+              />
+              <MetricCard
+                title="Queries/Second"
+                value={parseFloat(metrics.queries_per_second?.value || 0).toFixed(1)}
+                icon={ChartBarIcon}
+                color="warning"
+              />
+            </div>
+          )}
+
+          {/* Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <DatabaseMetricsChart
+              databaseId={id}
+              metric="cpu"
+              title="CPU Usage (%)"
+              color="#3b82f6"
+            />
+            <DatabaseMetricsChart
+              databaseId={id}
+              metric="memory"
+              title="Memory Usage (MB)"
+              color="#10b981"
+            />
+          </div>
         </div>
       )}
 

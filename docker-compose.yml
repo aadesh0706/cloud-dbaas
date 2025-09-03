@@ -85,11 +85,27 @@ services:
       - "3001:3000"
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SMTP_ENABLED=true
+      - GF_SMTP_HOST=smtp.gmail.com:587
+      - GF_SMTP_USER=testerhundread@gmail.com
+      - GF_SMTP_PASSWORD=nljk kscj zgra zkax
+      - GF_SMTP_SKIP_VERIFY=false
+      - GF_SMTP_FROM_ADDRESS=testerhundread@gmail.com
+      - GF_SMTP_FROM_NAME=DBaaS Platform Alerts
+      - GF_SMTP_STARTTLS_POLICY=OpportunisticStartTLS
     volumes:
       - grafana_data:/var/lib/grafana
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
     depends_on:
       - prometheus
+
+  # MailHog - Email testing (catches all emails for development)
+  mailhog:
+    image: mailhog/mailhog:latest
+    ports:
+      - "1025:1025"  # SMTP server
+      - "8025:8025"  # Web UI to view emails
+    restart: unless-stopped
 
   # Sample Database Engines for testing
   mysql-sample:
@@ -114,13 +130,14 @@ services:
 
   # Database Exporters for Prometheus
   mysql-exporter:
-    image: prom/mysqld-exporter:latest
+    image: prom/mysqld-exporter:v0.14.0
     ports:
       - "9104:9104"
     environment:
-      - DATA_SOURCE_NAME=root:mysql123@tcp(mysql-sample:3306)/
+      - DATA_SOURCE_NAME=exporter:exporter123@tcp(mysql-sample:3306)/
     depends_on:
       - mysql-sample
+    restart: unless-stopped
 
   mongodb-exporter:
     image: bitnami/mongodb-exporter:latest

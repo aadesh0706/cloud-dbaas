@@ -177,20 +177,33 @@ const HomePage = () => {
           </div>
         </div>
 
-        {/* Floating Cards Animation */}
-        <div className="absolute top-20 left-10 animate-float">
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
-            <div className="text-green-400 text-sm font-mono">● MySQL Ready</div>
+        {/* Floating Cards Animation - Hidden on mobile to prevent overlap */}
+        <div className="hidden lg:block absolute top-20 left-10 animate-float">
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/20">
+            <div className="text-green-400 text-xs font-mono">● MySQL Ready</div>
           </div>
         </div>
-        <div className="absolute top-40 right-10 animate-float-delayed">
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
-            <div className="text-blue-400 text-sm font-mono">● PostgreSQL Online</div>
+        <div className="hidden lg:block absolute top-40 right-10 animate-float-delayed">
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/20">
+            <div className="text-blue-400 text-xs font-mono">● PostgreSQL Online</div>
           </div>
         </div>
-        <div className="absolute bottom-40 left-20 animate-float-slow">
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
-            <div className="text-yellow-400 text-sm font-mono">● MongoDB Active</div>
+        <div className="hidden lg:block absolute bottom-40 left-20 animate-float-slow">
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/20">
+            <div className="text-yellow-400 text-xs font-mono">● MongoDB Active</div>
+          </div>
+        </div>
+        
+        {/* Mobile-friendly status indicators */}
+        <div className="lg:hidden flex justify-center items-center space-x-4 mt-8">
+          <div className="bg-white/10 backdrop-blur-md rounded-lg px-3 py-2 border border-white/20">
+            <div className="text-green-400 text-xs font-mono">● MySQL</div>
+          </div>
+          <div className="bg-white/10 backdrop-blur-md rounded-lg px-3 py-2 border border-white/20">
+            <div className="text-blue-400 text-xs font-mono">● PostgreSQL</div>
+          </div>
+          <div className="bg-white/10 backdrop-blur-md rounded-lg px-3 py-2 border border-white/20">
+            <div className="text-yellow-400 text-xs font-mono">● MongoDB</div>
           </div>
         </div>
       </section>

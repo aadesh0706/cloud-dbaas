@@ -195,6 +195,103 @@ router.post('/:id/connection', authMiddleware, async (req, res) => {
   }
 });
 
+// Get database schema (tables, columns, indexes)
+router.get('/:id/schema', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.userId;
+    
+    const database = await databaseService.getDatabaseById(id, userId);
+    
+    if (!database) {
+      return res.status(404).json({
+        error: 'Database Not Found',
+        message: 'Database does not exist or access denied'
+      });
+    }
+    
+    const schema = await databaseService.getDatabaseSchema(database);
+    
+    res.json({
+      schema
+    });
+  } catch (error) {
+    logger.error('Get database schema error:', error);
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to retrieve database schema'
+    });
+  }
+});
+
+// Get table details including columns and indexes
+router.get('/:id/schema/tables/:tableName', authMiddleware, async (req, res) => {
+  try {
+    const { id, tableName } = req.params;
+    const userId = req.user.userId;
+    
+    const database = await databaseService.getDatabaseById(id, userId);
+    
+    if (!database) {
+      return res.status(404).json({
+        error: 'Database Not Found',
+        message: 'Database does not exist or access denied'
+      });
+    }
+    
+    const tableDetails = await databaseService.getTableDetails(database, tableName);
+    
+    res.json({
+      table: tableDetails
+    });
+  } catch (error) {
+    logger.error('Get table details error:', error);
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to retrieve table details'
+    });
+  }
+});
+
+// Execute SQL query (read-only)
+router.post('/:id/query', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { query, limit = 100 } = req.body;
+    const userId = req.user.userId;
+    
+    // Validate query is read-only
+    const readOnlyPattern = /^\s*(SELECT|SHOW|DESCRIBE|EXPLAIN)\s+/i;
+    if (!readOnlyPattern.test(query.trim())) {
+      return res.status(400).json({
+        error: 'Invalid Query',
+        message: 'Only read-only queries (SELECT, SHOW, DESCRIBE, EXPLAIN) are allowed'
+      });
+    }
+    
+    const database = await databaseService.getDatabaseById(id, userId);
+    
+    if (!database) {
+      return res.status(404).json({
+        error: 'Database Not Found',
+        message: 'Database does not exist or access denied'
+      });
+    }
+    
+    const queryResult = await databaseService.executeReadOnlyQuery(database, query, limit);
+    
+    res.json({
+      result: queryResult
+    });
+  } catch (error) {
+    logger.error('Execute query error:', error);
+    res.status(500).json({
+      error: 'Query Error',
+      message: error.message || 'Failed to execute query'
+    });
+  }
+});
+
 // Scale database (update resources)
 router.patch('/:id/scale', authMiddleware, async (req, res) => {
   try {

@@ -50,6 +50,9 @@ export const databasesAPI = {
   delete: (id) => api.delete(`/databases/${id}`),
   scale: (id, scaleData) => api.patch(`/databases/${id}/scale`, scaleData),
   getConnection: (id) => api.post(`/databases/${id}/connection`),
+  getSchema: (id) => api.get(`/databases/${id}/schema`),
+  getTableDetails: (id, tableName) => api.get(`/databases/${id}/schema/tables/${tableName}`),
+  executeQuery: (id, query, limit) => api.post(`/databases/${id}/query`, { query, limit }),
 }
 
 // Projects API
