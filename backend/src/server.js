@@ -52,17 +52,16 @@ app.get('/health', (req, res) => {
 
 // Simple metrics endpoint for Prometheus
 app.get('/metrics', (req, res) => {
-  const metrics = `
-# HELP http_requests_total Total HTTP requests
+  const metrics = `# HELP http_requests_total Total HTTP requests
 # TYPE http_requests_total counter
 http_requests_total 100
 
-# HELP backend_uptime_seconds Backend uptime in seconds  
+# HELP backend_uptime_seconds Backend uptime in seconds
 # TYPE backend_uptime_seconds gauge
 backend_uptime_seconds ${process.uptime()}
 
 # HELP active_connections Current active connections
-# TYPE active_connections gauge  
+# TYPE active_connections gauge
 active_connections 25
 
 # HELP database_operations_total Total database operations
