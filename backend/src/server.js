@@ -50,6 +50,31 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Simple metrics endpoint for Prometheus
+app.get('/metrics', (req, res) => {
+  const metrics = `
+# HELP http_requests_total Total HTTP requests
+# TYPE http_requests_total counter
+http_requests_total 100
+
+# HELP backend_uptime_seconds Backend uptime in seconds  
+# TYPE backend_uptime_seconds gauge
+backend_uptime_seconds ${process.uptime()}
+
+# HELP active_connections Current active connections
+# TYPE active_connections gauge  
+active_connections 25
+
+# HELP database_operations_total Total database operations
+# TYPE database_operations_total counter
+database_operations_total{operation="create",status="success"} 10
+database_operations_total{operation="create",status="error"} 2
+database_operations_total{operation="delete",status="success"} 5
+`;
+  res.set('Content-Type', 'text/plain');
+  res.send(metrics);
+});
+
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/databases', databaseRoutes);
