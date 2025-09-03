@@ -4,6 +4,7 @@ import { useAuth } from './contexts/AuthContext'
 
 import Layout from './components/Layout'
 import ErrorBoundary from './components/ErrorBoundary'
+import HomePage from './pages/HomePage'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
@@ -33,9 +34,10 @@ function App() {
           {!user ? (
             // Public routes
             <>
+              <Route path="/" element={<HomePage />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route path="*" element={<Navigate to="/login" replace />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </>
           ) : (
             // Protected routes

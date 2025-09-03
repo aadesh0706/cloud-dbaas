@@ -4,6 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const cors = require('cors');
 
 const authRoutes = require('./routes/auth');
 const databaseRoutes = require('./routes/databases');
@@ -14,6 +15,7 @@ const errorHandler = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
 
 const app = express();
+
 const PORT = process.env.PORT || 5000;
 
 // Security middleware
