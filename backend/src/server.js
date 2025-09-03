@@ -4,7 +4,6 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
-const cors = require('cors');
 
 const authRoutes = require('./routes/auth');
 const databaseRoutes = require('./routes/databases');
