@@ -5,7 +5,6 @@ const k8s = require('@kubernetes/client-node');
 const yaml = require('yaml');
 const authMiddleware = require('../middleware/auth');
 const DatabaseService = require('../services/DatabaseService');
-const { metrics } = require('../middleware/prometheus');
 const logger = require('../utils/logger');
 
 const router = express.Router();
@@ -108,14 +107,6 @@ router.post('/', authMiddleware, async (req, res) => {
     // Create database in Kubernetes
     const database = await databaseService.createDatabase(databaseConfig);
     
-    // Update metrics
-    metrics.createdDatabasesTotal.inc({ database_type: value.engine });
-    metrics.databaseOperationsTotal.inc({ 
-      operation_type: 'create', 
-      database_type: value.engine, 
-      status: 'success' 
-    });
-    
     logger.info(`Database created: ${database.name} for user ${userId}`);
     
     res.status(201).json({
@@ -124,14 +115,6 @@ router.post('/', authMiddleware, async (req, res) => {
     });
 
   } catch (error) {
-    // Update error metrics
-    const engine = req.body.engine || 'unknown';
-    metrics.databaseOperationsTotal.inc({ 
-      operation_type: 'create', 
-      database_type: engine, 
-      status: 'error' 
-    });
-    
     logger.error('Create database error:', error);
     res.status(500).json({
       error: 'Internal Server Error',
