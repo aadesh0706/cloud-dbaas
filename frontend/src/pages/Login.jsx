@@ -4,11 +4,15 @@ import { useForm } from 'react-hook-form'
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 import { useAuth } from '../contexts/AuthContext'
 import LoadingSpinner from '../components/LoadingSpinner'
+import EmailVerification from '../components/EmailVerification'
 import clsx from 'clsx'
+import toast from 'react-hot-toast'
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [showVerification, setShowVerification] = useState(false)
+  const [verificationEmail, setVerificationEmail] = useState('')
   const { login, isAuthenticated } = useAuth()
 
   const {
@@ -29,13 +33,39 @@ const Login = () => {
       const result = await login(data.email, data.password)
       
       if (!result.success) {
-        setError('root', { message: result.error })
+        if (result.requiresVerification) {
+          setVerificationEmail(data.email)
+          setShowVerification(true)
+          toast.error('Please verify your email before logging in')
+        } else {
+          setError('root', { message: result.error })
+        }
       }
     } catch (error) {
       setError('root', { message: 'Login failed. Please try again.' })
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleBackToLogin = () => {
+    setShowVerification(false)
+    setVerificationEmail('')
+  }
+
+  const handleVerificationSuccess = () => {
+    // User will be automatically redirected by EmailVerification component
+    setShowVerification(false)
+  }
+
+  if (showVerification) {
+    return (
+      <EmailVerification
+        email={verificationEmail}
+        onVerificationSuccess={handleVerificationSuccess}
+        onBackToRegister={handleBackToLogin}
+      />
+    )
   }
 
   return (

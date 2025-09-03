@@ -4,19 +4,25 @@ import { useForm } from 'react-hook-form'
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 import { useAuth } from '../contexts/AuthContext'
 import LoadingSpinner from '../components/LoadingSpinner'
+import EmailVerification from '../components/EmailVerification'
+import { authAPI } from '../services/api'
 import clsx from 'clsx'
+import toast from 'react-hot-toast'
 
 const Register = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const { register: registerUser, isAuthenticated } = useAuth()
+  const [showVerification, setShowVerification] = useState(false)
+  const [registrationEmail, setRegistrationEmail] = useState('')
+  const { isAuthenticated } = useAuth()
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     setError,
-    watch
+    watch,
+    getValues
   } = useForm()
 
   const password = watch('password')
@@ -29,7 +35,7 @@ const Register = () => {
     setIsLoading(true)
     
     try {
-      const result = await registerUser({
+      const response = await authAPI.register({
         username: data.username,
         email: data.email,
         password: data.password,
@@ -37,14 +43,39 @@ const Register = () => {
         lastName: data.lastName
       })
       
-      if (!result.success) {
-        setError('root', { message: result.error })
+      if (response.requiresVerification) {
+        setRegistrationEmail(data.email)
+        setShowVerification(true)
+        toast.success(response.message || 'Verification code sent to your email!')
       }
+      
     } catch (error) {
-      setError('root', { message: 'Registration failed. Please try again.' })
+      const errorMessage = error.response?.data?.message || 'Registration failed. Please try again.'
+      setError('root', { message: errorMessage })
+      toast.error(errorMessage)
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleBackToRegister = () => {
+    setShowVerification(false)
+    setRegistrationEmail('')
+  }
+
+  const handleVerificationSuccess = () => {
+    // User will be automatically redirected by EmailVerification component
+    // since it handles the login after successful verification
+  }
+
+  if (showVerification) {
+    return (
+      <EmailVerification
+        email={registrationEmail}
+        onVerificationSuccess={handleVerificationSuccess}
+        onBackToRegister={handleBackToRegister}
+      />
+    )
   }
 
   return (

@@ -37,26 +37,62 @@ export const AuthProvider = ({ children }) => {
     initAuth()
   }, [])
 
-  const login = async (email, password) => {
+  const login = async (email, password, token = null) => {
     try {
-      const response = await authAPI.login(email, password)
-      const { user: userData, token } = response
-
-      // Store token in cookie (httpOnly would be better in production)
-      Cookies.set('authToken', token, { 
-        expires: 1, // 1 day
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict'
-      })
-
-      setUser(userData)
-      toast.success('Login successful!')
+      let response;
       
-      return { success: true }
+      if (token) {
+        // Direct token login (from email verification)
+        response = { user: { email }, token };
+        
+        // Get user data with the token
+        Cookies.set('authToken', token, { 
+          expires: 1, // 1 day
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict'
+        });
+        
+        const userData = await authAPI.getCurrentUser();
+        response.user = userData.user;
+      } else {
+        // Normal password login
+        response = await authAPI.login(email, password);
+        const { user: userData, token: authToken } = response;
+
+        // Store token in cookie
+        Cookies.set('authToken', authToken, { 
+          expires: 1, // 1 day
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict'
+        });
+        
+        response.user = userData;
+      }
+
+      setUser(response.user);
+      
+      if (!token) {
+        toast.success('Login successful!');
+      } else {
+        toast.success('Welcome to Cloud DBaaS Platform!');
+      }
+      
+      return { success: true };
     } catch (error) {
-      const message = error.response?.data?.message || 'Login failed'
-      toast.error(message)
-      return { success: false, error: message }
+      const message = error.response?.data?.message || 'Login failed';
+      
+      // Handle email verification required
+      if (error.response?.data?.requiresVerification) {
+        return { 
+          success: false, 
+          error: message, 
+          requiresVerification: true,
+          email: email 
+        };
+      }
+      
+      toast.error(message);
+      return { success: false, error: message };
     }
   }
 

@@ -74,23 +74,23 @@ const HomePage = () => {
   const testimonials = [
     {
       quote: "This platform revolutionized our development workflow. We can spin up databases instantly!",
-      author: "Sarah Chen",
-      role: "Senior Developer",
-      company: "TechCorp",
-      avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=64&h=64&fit=crop&crop=face"
+      author: "Aadesh Gulumbe",
+      role: "Full-Stack Developer",
+      company: "Project Creator",
+      avatar: "/src/assets/images/aadesh-avatar.jpg" // Update this line
     },
     {
       quote: "The monitoring dashboard gives us insights we never had before. Game changer!",
-      author: "Michael Rodriguez",
-      role: "DevOps Engineer", 
-      company: "CloudScale",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=face"
+      author: "Engineering Student",
+      role: "NMIET",
+      company: "Final Year Project",
+      avatar: "/src/assets/images/aadesh-avatar.jpg" // Update this line
     },
     {
       quote: "Finally, a DBaaS that actually works as advertised. Clean, fast, reliable.",
-      author: "Emily Johnson",
-      role: "CTO",
-      company: "StartupXYZ",
+      author: "Cloud Enthusiast",
+      role: "Technology Innovator",
+      company: "Open Source",
       avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=64&h=64&fit=crop&crop=face"
     }
   ];
@@ -109,8 +109,8 @@ const HomePage = () => {
             </div>
             <div className="hidden md:flex items-center space-x-8">
               <a href="#features" className="text-white/80 hover:text-white transition-colors">Features</a>
-              <a href="#pricing" className="text-white/80 hover:text-white transition-colors">Pricing</a>
-              <a href="#docs" className="text-white/80 hover:text-white transition-colors">Docs</a>
+              <Link to="/about" className="text-white/80 hover:text-white transition-colors">About</Link>
+              <a href="https://github.com/aadesh0706" target="_blank" rel="noopener noreferrer" className="text-white/80 hover:text-white transition-colors">GitHub</a>
               <Link to="/login" className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all duration-200 backdrop-blur-sm">
                 Sign In
               </Link>
@@ -386,7 +386,7 @@ const HomePage = () => {
             Ready to Deploy Your First Database?
           </h2>
           <p className="text-xl text-white/80 mb-12">
-            Join thousands of developers using our platform to build amazing applications.
+            Created by Aadesh Gulumbe as a comprehensive DBaaS solution for modern developers.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -424,37 +424,37 @@ const HomePage = () => {
                 <span className="text-xl font-bold text-white">CloudDBaaS</span>
               </div>
               <p className="text-white/60 text-sm">
-                The modern Database-as-a-Service platform for developers and teams.
+                A modern Database-as-a-Service platform created by Aadesh Gulumbe. Built with React, Node.js, and Docker for enterprise-grade database management.
               </p>
             </div>
             
             <div>
               <h4 className="text-white font-semibold mb-4">Platform</h4>
               <ul className="space-y-2 text-white/60 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">Features</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Documentation</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">API Reference</a></li>
+                <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
+                <li><a href="/about" className="hover:text-white transition-colors">About Creator</a></li>
+                <li><a href="https://github.com/aadesh0706" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Source Code</a></li>
+                <li><a href="mailto:gulumbe.aadesh2023@nmiet.edu.in" className="hover:text-white transition-colors">Get Support</a></li>
               </ul>
             </div>
             
             <div>
               <h4 className="text-white font-semibold mb-4">Company</h4>
               <ul className="space-y-2 text-white/60 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">About</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
+                <li><a href="/about" className="hover:text-white transition-colors">About</a></li>
+                <li><a href="mailto:gulumbe.aadesh2023@nmiet.edu.in" className="hover:text-white transition-colors">Contact</a></li>
+                <li><a href="https://github.com/aadesh0706" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Projects</a></li>
+                <li><a href="https://linkedin.com/in/aadesh-gulumbe" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">LinkedIn</a></li>
               </ul>
             </div>
             
             <div>
-              <h4 className="text-white font-semibold mb-4">Support</h4>
+              <h4 className="text-white font-semibold mb-4">Developer</h4>
               <ul className="space-y-2 text-white/60 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Community</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Status</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">GitHub</a></li>
+                <li><span className="text-white/80">Aadesh Gulumbe</span></li>
+                <li><span className="text-white/60">Full-Stack Developer</span></li>
+                <li><span className="text-white/60">NMIET Student</span></li>
+                <li><a href="https://github.com/aadesh0706" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">GitHub</a></li>
               </ul>
             </div>
           </div>
@@ -462,12 +462,12 @@ const HomePage = () => {
           <div className="border-t border-white/10 pt-8 mt-8">
             <div className="flex flex-col md:flex-row justify-between items-center">
               <div className="text-white/60 text-sm">
-                © 2025 CloudDBaaS Platform. All rights reserved.
+                © 2025 CloudDBaaS Platform. Created by Aadesh Gulumbe. All rights reserved.
               </div>
               <div className="flex space-x-6 mt-4 md:mt-0">
-                <a href="#" className="text-white/60 hover:text-white transition-colors">Privacy</a>
-                <a href="#" className="text-white/60 hover:text-white transition-colors">Terms</a>
-                <a href="#" className="text-white/60 hover:text-white transition-colors">Security</a>
+                <a href="mailto:gulumbe.aadesh2023@nmiet.edu.in" className="text-white/60 hover:text-white transition-colors">Contact</a>
+                <a href="https://github.com/aadesh0706" target="_blank" rel="noopener noreferrer" className="text-white/60 hover:text-white transition-colors">GitHub</a>
+                <a href="https://linkedin.com/in/aadesh-gulumbe" target="_blank" rel="noopener noreferrer" className="text-white/60 hover:text-white transition-colors">LinkedIn</a>
               </div>
             </div>
           </div>

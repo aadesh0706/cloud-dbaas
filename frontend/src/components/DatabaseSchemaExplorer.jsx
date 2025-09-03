@@ -9,7 +9,8 @@ import {
   ChevronRightIcon,
   ChevronDownIcon,
   EyeIcon,
-  ClipboardDocumentIcon
+  ClipboardDocumentIcon,
+  PlayIcon
 } from '@heroicons/react/24/outline'
 import { databasesAPI } from '../services/api'
 import LoadingSpinner from './LoadingSpinner'
@@ -21,6 +22,8 @@ const DatabaseSchemaExplorer = ({ database }) => {
   const [queryResult, setQueryResult] = useState(null)
   const [isExecutingQuery, setIsExecutingQuery] = useState(false)
   const [expandedTable, setExpandedTable] = useState(null)
+  const [collectionData, setCollectionData] = useState(null)
+  const [isLoadingCollectionData, setIsLoadingCollectionData] = useState(false)
 
   // Fetch database schema
   const { data: schemaResponse, isLoading: loadingSchema } = useQuery(
@@ -38,6 +41,25 @@ const DatabaseSchemaExplorer = ({ database }) => {
 
   const schema = schemaResponse?.schema
   const tableDetails = tableResponse?.table
+
+  const handleViewData = async (tableName) => {
+    setIsLoadingCollectionData(true)
+    try {
+      const response = await databasesAPI.getCollectionData(database.id, tableName, { limit: 10 })
+      setCollectionData({
+        tableName,
+        data: response.data,
+        columns: response.columns,
+        total: response.total
+      })
+      toast.success(`Loaded ${response.data.length} records from ${tableName}`)
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to load collection data')
+      setCollectionData(null)
+    } finally {
+      setIsLoadingCollectionData(false)
+    }
+  }
 
   const handleExecuteQuery = async () => {
     if (!queryInput.trim()) {
@@ -147,6 +169,14 @@ const DatabaseSchemaExplorer = ({ database }) => {
               {expandedTable === table.name && (
                 <div className="border-t border-gray-100 p-4 bg-gray-50">
                   <div className="flex space-x-4 text-sm">
+                    <button
+                      onClick={() => handleViewData(table.name)}
+                      disabled={isLoadingCollectionData}
+                      className="text-green-600 hover:text-green-700 font-medium flex items-center"
+                    >
+                      <PlayIcon className="w-4 h-4 mr-1" />
+                      {isLoadingCollectionData ? 'Loading...' : 'View Data'}
+                    </button>
                     <button
                       onClick={() => {
                         setSelectedTable(table.name)
@@ -263,6 +293,71 @@ const DatabaseSchemaExplorer = ({ database }) => {
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Collection Data Viewer */}
+      {collectionData && (
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+              <TableCellsIcon className="w-5 h-5 mr-2 text-primary-600" />
+              {collectionData.tableName} Data
+            </h3>
+            <div className="text-sm text-gray-600">
+              Showing {collectionData.data.length} of {collectionData.total} records
+            </div>
+          </div>
+
+          <div className="overflow-x-auto max-h-96 border border-gray-200 rounded">
+            <table className="min-w-full table-auto">
+              <thead className="bg-gray-50 sticky top-0">
+                <tr>
+                  {collectionData.columns.map((column, index) => (
+                    <th key={index} className="text-left py-2 px-3 text-sm font-medium text-gray-700 border-r border-gray-200">
+                      {column.name}
+                      <span className="text-xs text-gray-500 ml-1">({column.type})</span>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {collectionData.data.map((row, rowIndex) => (
+                  <tr key={rowIndex} className="border-b border-gray-100 hover:bg-gray-50">
+                    {collectionData.columns.map((column, colIndex) => (
+                      <td key={colIndex} className="py-2 px-3 text-sm border-r border-gray-100">
+                        <div className="max-w-xs overflow-hidden">
+                          {row[column.name] !== null && row[column.name] !== undefined 
+                            ? typeof row[column.name] === 'object' 
+                              ? (
+                                <pre className="text-xs bg-gray-100 p-1 rounded max-h-20 overflow-y-auto">
+                                  {JSON.stringify(row[column.name], null, 2)}
+                                </pre>
+                              )
+                              : (
+                                <span className="font-mono text-sm">
+                                  {String(row[column.name])}
+                                </span>
+                              )
+                            : <span className="text-gray-400 italic">null</span>
+                          }
+                        </div>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
+          <div className="mt-4 text-center">
+            <button
+              onClick={() => setCollectionData(null)}
+              className="text-sm text-gray-500 hover:text-gray-700"
+            >
+              Close Data View
+            </button>
+          </div>
         </div>
       )}
 

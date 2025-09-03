@@ -30,11 +30,13 @@ services:
       - JWT_SECRET=your-super-secret-jwt-key-here
       - DB_HOST=postgres
       - DB_PORT=5432
-      - DB_NAME=dbaas_platform
+      - DB_NAME=dbaas
       - DB_USER=postgres
       - DB_PASSWORD=postgres123
       - REDIS_URL=redis://redis:6379
       - PROMETHEUS_URL=http://prometheus:9090
+      - GMAIL_USER=testerhundread@gmail.com
+      - GMAIL_APP_PASSWORD=nljk kscj zgra zkax
     depends_on:
       - postgres
       - redis

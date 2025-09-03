@@ -12,6 +12,7 @@ const projectRoutes = require('./routes/projects');
 
 const errorHandler = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
+const CleanupService = require('./services/CleanupService');
 
 const app = express();
 
@@ -27,10 +28,15 @@ app.use(cors({
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.'
+  max: process.env.NODE_ENV === 'development' ? 10000 : 100, // Much higher limit for development
+  message: 'Too many requests from this IP, please try again later.',
+  skip: (req) => process.env.NODE_ENV === 'development' // Skip rate limiting in development
 });
-app.use(limiter);
+
+// Apply rate limiter only in production
+if (process.env.NODE_ENV !== 'development') {
+  app.use(limiter);
+}
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -105,6 +111,11 @@ process.on('SIGINT', () => {
 app.listen(PORT, () => {
   logger.info(`🚀 DBaaS Backend Server running on port ${PORT}`);
   logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  
+  // Initialize cleanup service
+  const cleanupService = new CleanupService();
+  cleanupService.startScheduler();
+  logger.info('✅ Email verification and cleanup services initialized');
 });
 
 module.exports = app;

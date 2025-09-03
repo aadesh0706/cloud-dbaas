@@ -39,6 +39,8 @@ api.interceptors.response.use(
 export const authAPI = {
   login: (email, password) => api.post('/auth/login', { email, password }),
   register: (userData) => api.post('/auth/register', userData),
+  verifyOTP: (otpData) => api.post('/auth/verify-otp', otpData),
+  resendOTP: (emailData) => api.post('/auth/resend-otp', emailData),
   getCurrentUser: () => api.get('/auth/me'),
 }
 
@@ -53,6 +55,12 @@ export const databasesAPI = {
   getSchema: (id) => api.get(`/databases/${id}/schema`),
   getTableDetails: (id, tableName) => api.get(`/databases/${id}/schema/tables/${tableName}`),
   executeQuery: (id, query, limit) => api.post(`/databases/${id}/query`, { query, limit }),
+  getCollectionData: (id, collectionName, options = {}) => {
+    const { limit = 10, skip = 0, filter = '{}' } = options;
+    return api.get(`/databases/${id}/data/${collectionName}`, { 
+      params: { limit, skip, filter } 
+    });
+  },
 }
 
 // Projects API

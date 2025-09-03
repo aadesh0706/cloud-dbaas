@@ -292,6 +292,44 @@ router.post('/:id/query', authMiddleware, async (req, res) => {
   }
 });
 
+// Get collection/table data (for viewing records)
+router.get('/:id/data/:collectionName', authMiddleware, async (req, res) => {
+  try {
+    const { id, collectionName } = req.params;
+    const { limit = 10, skip = 0, filter = '{}' } = req.query;
+    const userId = req.user.userId;
+    
+    const database = await databaseService.getDatabaseById(id, userId);
+    
+    if (!database) {
+      return res.status(404).json({
+        error: 'Database Not Found',
+        message: 'Database does not exist or access denied'
+      });
+    }
+    
+    // Get collection data
+    const data = await databaseService.getCollectionData(database, collectionName, {
+      limit: Math.min(parseInt(limit), 100), // Max 100 records
+      skip: parseInt(skip),
+      filter: filter
+    });
+    
+    res.json({
+      data: data.rows,
+      columns: data.columns,
+      total: data.rowCount,
+      collection: collectionName
+    });
+  } catch (error) {
+    logger.error('Get collection data error:', error);
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to retrieve collection data'
+    });
+  }
+});
+
 // Scale database (update resources)
 router.patch('/:id/scale', authMiddleware, async (req, res) => {
   try {

@@ -596,7 +596,7 @@ storage:
     const envVars = {
       mysql: [
         { name: 'MYSQL_DATABASE', value: name },
-        { name: 'MYSQL_ROOT_PASSWORD', valueFrom: { secretKeyRef: { name: `${k8s_deployment}-secret`, key: 'rootPassword' } }}
+        { name: 'MYSQL_ROOT_PASSWORD', valueFrom: { secretKeyRef: { name: `${k8s_deployment}-secret`, key: 'mysql123' } }}
       ],
       postgresql: [
         { name: 'POSTGRES_DB', value: name },
@@ -604,7 +604,7 @@ storage:
       ],
       mongodb: [
         { name: 'MONGO_INITDB_DATABASE', value: name },
-        { name: 'MONGO_INITDB_ROOT_PASSWORD', valueFrom: { secretKeyRef: { name: `${k8s_deployment}-secret`, key: 'rootPassword' } }}
+        { name: 'MONGO_INITDB_ROOT_PASSWORD', valueFrom: { secretKeyRef: { name: `${k8s_deployment}-secret`, key: 'mysql123' } }}
       ]
     };
 
@@ -661,7 +661,7 @@ storage:
         host: process.env.NODE_ENV === 'production' ? `${database.k8s_deployment}-service` : 'mysql-sample',
         port: 3306,
         user: 'root',
-        password: process.env.MYSQL_ROOT_PASSWORD || 'rootpassword',
+        password: process.env.MYSQL_ROOT_PASSWORD || 'mysql123',
         database: database.name
       });
     } else if (engine === 'postgresql') {
@@ -942,6 +942,93 @@ storage:
         }
       }
     }
+  }
+
+  // Get collection/table data for viewing
+  async getCollectionData(database, collectionName, options = {}) {
+    let connection;
+    try {
+      connection = await this.createDatabaseConnection(database);
+      const { engine } = database;
+      const { limit = 10, skip = 0, filter = '{}' } = options;
+
+      if (engine === 'mysql') {
+        const [rows, fields] = await connection.execute(
+          `SELECT * FROM ${collectionName} LIMIT ${limit} OFFSET ${skip}`
+        );
+        return {
+          rows: rows || [],
+          columns: fields ? fields.map(f => ({ name: f.name, type: f.type })) : [],
+          rowCount: rows ? rows.length : 0
+        };
+      } else if (engine === 'postgresql') {
+        const result = await connection.query(
+          `SELECT * FROM ${collectionName} LIMIT ${limit} OFFSET ${skip}`
+        );
+        return {
+          rows: result.rows || [],
+          columns: result.fields ? result.fields.map(f => ({ name: f.name, type: f.dataTypeID })) : [],
+          rowCount: result.rows ? result.rows.length : 0
+        };
+      } else if (engine === 'mongodb') {
+        const db = connection.db(database.name);
+        const collection = db.collection(collectionName);
+        
+        // Parse filter if provided
+        let filterObj = {};
+        try {
+          if (filter && filter !== '{}') {
+            filterObj = JSON.parse(filter);
+          }
+        } catch (e) {
+          // If filter parsing fails, use empty filter
+          filterObj = {};
+        }
+        
+        const docs = await collection.find(filterObj).skip(skip).limit(limit).toArray();
+        
+        // Get column information from first document
+        let columns = [];
+        if (docs.length > 0) {
+          const firstDoc = docs[0];
+          columns = Object.keys(firstDoc).map(key => ({
+            name: key,
+            type: this.getMongoFieldType(firstDoc[key])
+          }));
+        }
+        
+        return {
+          rows: docs,
+          columns: columns,
+          rowCount: docs.length
+        };
+      }
+    } catch (error) {
+      logger.error('Get collection data error:', error);
+      throw error;
+    } finally {
+      if (connection) {
+        if (database.engine === 'mysql') {
+          await connection.end();
+        } else if (database.engine === 'postgresql') {
+          await connection.end();
+        } else if (database.engine === 'mongodb') {
+          await connection.close();
+        }
+      }
+    }
+  }
+
+  // Helper method to determine MongoDB field type
+  getMongoFieldType(value) {
+    if (value === null) return 'null';
+    if (Array.isArray(value)) return 'array';
+    if (typeof value === 'object') {
+      if (value._id) return 'objectid';
+      if (value instanceof Date) return 'date';
+      return 'object';
+    }
+    return typeof value;
   }
 
   formatDatabaseResponse(db) {
