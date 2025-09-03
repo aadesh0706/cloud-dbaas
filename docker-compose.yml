@@ -112,6 +112,36 @@ services:
     volumes:
       - mongo_data:/data/db
 
+  # Database Exporters for Prometheus
+  mysql-exporter:
+    image: prom/mysqld-exporter:latest
+    ports:
+      - "9104:9104"
+    environment:
+      - DATA_SOURCE_NAME=root:mysql123@tcp(mysql-sample:3306)/
+    depends_on:
+      - mysql-sample
+
+  mongodb-exporter:
+    image: bitnami/mongodb-exporter:latest
+    ports:
+      - "9216:9216"
+    environment:
+      - MONGODB_URI=mongodb://mongo:mongo123@mongo-sample:27017
+    depends_on:
+      - mongo-sample
+
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    ports:
+      - "9121:9121"
+    environment:
+      - REDIS_ADDR=redis://redis:6379
+    depends_on:
+      - redis
+    command:
+      - '--redis.addr=redis://redis:6379'
+
 volumes:
   postgres_data:
   redis_data:
