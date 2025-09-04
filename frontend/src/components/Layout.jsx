@@ -5,6 +5,7 @@ import {
   CircleStackIcon, 
   FolderIcon, 
   ChartBarIcon,
+  CpuChipIcon,
   Cog6ToothIcon,
   UserCircleIcon,
   ArrowRightOnRectangleIcon,
@@ -20,6 +21,7 @@ const navigation = [
   { name: 'Databases', href: '/databases', icon: CircleStackIcon },
   { name: 'Projects', href: '/projects', icon: FolderIcon },
   { name: 'Monitoring', href: '/monitoring', icon: ChartBarIcon },
+  { name: 'Performance', href: '/performance', icon: CpuChipIcon },
 ]
 
 const Layout = () => {
