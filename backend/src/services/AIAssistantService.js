@@ -1,5 +1,9 @@
 // const { Configuration, OpenAIApi } = require('openai');
-const DatabaseService = require('./DatabaseService');
+// Use production DatabaseService in production, development one locally
+const DatabaseService = process.env.NODE_ENV === 'production' 
+  ? require('./DatabaseService.production')
+  : require('./DatabaseService');
+
 const logger = require('../utils/logger');
 const { v4: uuidv4 } = require('uuid');
 

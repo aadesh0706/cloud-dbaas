@@ -4,7 +4,12 @@ const { v4: uuidv4 } = require('uuid');
 const k8s = require('@kubernetes/client-node');
 const yaml = require('yaml');
 const authMiddleware = require('../middleware/auth');
-const DatabaseService = require('../services/DatabaseService');
+
+// Use production DatabaseService in production, development one locally
+const DatabaseService = process.env.NODE_ENV === 'production' 
+  ? require('../services/DatabaseService.production')
+  : require('../services/DatabaseService');
+
 const logger = require('../utils/logger');
 
 const router = express.Router();
