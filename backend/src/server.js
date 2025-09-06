@@ -62,6 +62,47 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Database connectivity test endpoint
+app.get('/db-test', async (req, res) => {
+  const { Pool } = require('pg');
+  const pool = new Pool({
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    database: process.env.DB_NAME,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+  });
+
+  try {
+    const result = await pool.query('SELECT NOW() as current_time');
+    await pool.end();
+    res.json({
+      status: 'success',
+      message: 'Database connection successful',
+      timestamp: result.rows[0].current_time,
+      config: {
+        host: process.env.DB_HOST,
+        port: process.env.DB_PORT,
+        database: process.env.DB_NAME,
+        user: process.env.DB_USER
+      }
+    });
+  } catch (error) {
+    await pool.end();
+    res.status(500).json({
+      status: 'error',
+      message: 'Database connection failed',
+      error: error.message,
+      config: {
+        host: process.env.DB_HOST,
+        port: process.env.DB_PORT,
+        database: process.env.DB_NAME,
+        user: process.env.DB_USER
+      }
+    });
+  }
+});
+
 // Simple metrics endpoint for Prometheus
 app.get('/metrics', (req, res) => {
   const metrics = `# HELP http_requests_total Total HTTP requests
