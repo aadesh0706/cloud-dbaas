@@ -37,27 +37,27 @@ api.interceptors.response.use(
 
 // Auth API
 export const authAPI = {
-  login: (email, password) => api.post('/auth/login', { email, password }),
-  register: (userData) => api.post('/auth/register', userData),
-  verifyOTP: (otpData) => api.post('/auth/verify-otp', otpData),
-  resendOTP: (emailData) => api.post('/auth/resend-otp', emailData),
-  getCurrentUser: () => api.get('/auth/me'),
+  login: (email, password) => api.post('/api/auth/login', { email, password }),
+  register: (userData) => api.post('/api/auth/register', userData),
+  verifyOTP: (otpData) => api.post('/api/auth/verify-otp', otpData),
+  resendOTP: (emailData) => api.post('/api/auth/resend-otp', emailData),
+  getCurrentUser: () => api.get('/api/auth/me'),
 }
 
 // Databases API
 export const databasesAPI = {
-  getAll: () => api.get('/databases'),
-  getById: (id) => api.get(`/databases/${id}`),
-  create: (databaseData) => api.post('/databases', databaseData),
-  delete: (id) => api.delete(`/databases/${id}`),
-  scale: (id, scaleData) => api.patch(`/databases/${id}/scale`, scaleData),
-  getConnection: (id) => api.post(`/databases/${id}/connection`),
-  getSchema: (id) => api.get(`/databases/${id}/schema`),
-  getTableDetails: (id, tableName) => api.get(`/databases/${id}/schema/tables/${tableName}`),
-  executeQuery: (id, query, limit) => api.post(`/databases/${id}/query`, { query, limit }),
+  getAll: () => api.get('/api/databases'),
+  getById: (id) => api.get(`/api/databases/${id}`),
+  create: (databaseData) => api.post('/api/databases', databaseData),
+  delete: (id) => api.delete(`/api/databases/${id}`),
+  scale: (id, scaleData) => api.patch(`/api/databases/${id}/scale`, scaleData),
+  getConnection: (id) => api.post(`/api/databases/${id}/connection`),
+  getSchema: (id) => api.get(`/api/databases/${id}/schema`),
+  getTableDetails: (id, tableName) => api.get(`/api/databases/${id}/schema/tables/${tableName}`),
+  executeQuery: (id, query, limit) => api.post(`/api/databases/${id}/query`, { query, limit }),
   getCollectionData: (id, collectionName, options = {}) => {
     const { limit = 10, skip = 0, filter = '{}' } = options;
-    return api.get(`/databases/${id}/data/${collectionName}`, { 
+    return api.get(`/api/databases/${id}/data/${collectionName}`, { 
       params: { limit, skip, filter } 
     });
   },
@@ -65,36 +65,36 @@ export const databasesAPI = {
 
 // Projects API
 export const projectsAPI = {
-  getAll: () => api.get('/projects'),
-  getById: (id) => api.get(`/projects/${id}`),
-  create: (projectData) => api.post('/projects', projectData),
-  update: (id, projectData) => api.put(`/projects/${id}`, projectData),
-  delete: (id) => api.delete(`/projects/${id}`),
-  getStats: (id) => api.get(`/projects/${id}/stats`),
+  getAll: () => api.get('/api/projects'),
+  getById: (id) => api.get(`/api/projects/${id}`),
+  create: (projectData) => api.post('/api/projects', projectData),
+  update: (id, projectData) => api.put(`/api/projects/${id}`, projectData),
+  delete: (id) => api.delete(`/api/projects/${id}`),
+  getStats: (id) => api.get(`/api/projects/${id}/stats`),
 }
 
 // Monitoring API
 export const monitoringAPI = {
   getDatabaseMetrics: (id, timeRange = '1h') => 
-    api.get(`/monitoring/databases/${id}/metrics`, { params: { timeRange } }),
+    api.get(`/api/monitoring/databases/${id}/metrics`, { params: { timeRange } }),
   getDatabaseHistory: (id, metric = 'cpu', timeRange = '1h') => 
-    api.get(`/monitoring/databases/${id}/metrics/history`, { 
+    api.get(`/api/monitoring/databases/${id}/metrics/history`, { 
       params: { metric, timeRange } 
     }),
-  getDashboardUrl: (id) => api.get(`/monitoring/databases/${id}/dashboard`),
-  getSystemMetrics: () => api.get('/monitoring/system/metrics'),
-  getAlerts: () => api.get('/monitoring/alerts'),
+  getDashboardUrl: (id) => api.get(`/api/monitoring/databases/${id}/dashboard`),
+  getSystemMetrics: () => api.get('/api/monitoring/system/metrics'),
+  getAlerts: () => api.get('/api/monitoring/alerts'),
 }
 
 // AI Assistant API
 export const aiAssistantAPI = {
-  chat: (message, context = {}) => api.post('/ai-assistant/chat', { message, context }),
-  getCapabilities: () => api.get('/ai-assistant/capabilities'),
-  getHistory: (limit = 20) => api.get(`/ai-assistant/history?limit=${limit}`),
+  chat: (message, context = {}) => api.post('/api/ai-assistant/chat', { message, context }),
+  getCapabilities: () => api.get('/api/ai-assistant/capabilities'),
+  getHistory: (limit = 20) => api.get(`/api/ai-assistant/history?limit=${limit}`),
   suggestSchema: (purpose, industry, expectedLoad) => 
-    api.post('/ai-assistant/suggest-schema', { purpose, industry, expectedLoad }),
+    api.post('/api/ai-assistant/suggest-schema', { purpose, industry, expectedLoad }),
   generateCode: (databaseId, language = 'nodejs', operation = 'connect') =>
-    api.post('/ai-assistant/generate-code', { databaseId, language, operation })
+    api.post('/api/ai-assistant/generate-code', { databaseId, language, operation })
 }
 
 export default api
