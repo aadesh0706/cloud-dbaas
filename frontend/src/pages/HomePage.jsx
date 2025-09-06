@@ -12,6 +12,7 @@ import {
   CheckIcon,
   SparklesIcon
 } from '@heroicons/react/24/outline';
+import aadeshAvatar from '../assets/images/aadesh-avatar.jpg';
 
 const HomePage = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -77,14 +78,14 @@ const HomePage = () => {
       author: "Aadesh Gulumbe",
       role: "Full-Stack Developer",
       company: "Project Creator",
-      avatar: "/src/assets/images/aadesh-avatar.jpg" // Update this line
+      avatar: aadeshAvatar
     },
     {
       quote: "The monitoring dashboard gives us insights we never had before. Game changer!",
       author: "Engineering Student",
       role: "NMIET",
       company: "Final Year Project",
-      avatar: "/src/assets/images/aadesh-avatar.jpg" // Update this line
+      avatar: aadeshAvatar
     },
     {
       quote: "Finally, a DBaaS that actually works as advertised. Clean, fast, reliable.",
