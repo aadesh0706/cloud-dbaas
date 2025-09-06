@@ -15,6 +15,7 @@ const aiAssistantRoutes = require('./routes/ai-assistant');
 const errorHandler = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
 const CleanupService = require('./services/CleanupService');
+const initDatabase = require('./utils/initDatabase');
 
 const app = express();
 
@@ -115,9 +116,12 @@ process.on('SIGINT', () => {
   process.exit(0);
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   logger.info(`🚀 DBaaS Backend Server running on port ${PORT}`);
   logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  
+  // Initialize database tables
+  await initDatabase();
   
   // Initialize cleanup service
   const cleanupService = new CleanupService();
