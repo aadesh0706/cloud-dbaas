@@ -407,7 +407,7 @@ const PerformanceAnalysis = () => {
                     <div>
                       <p className="text-sm font-medium text-purple-600">Performance Score</p>
                       <p className="text-2xl font-bold text-purple-900">
-                        {benchmarkResults.performance?.score || 'N/A'}/100
+                        {liveMetrics?.performanceScore !== undefined ? liveMetrics.performanceScore : (benchmarkResults.performance?.score || 'N/A')}/100
                       </p>
                       <p className="text-xs text-purple-700">
                         Overall Rating
