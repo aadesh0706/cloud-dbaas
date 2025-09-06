@@ -15,6 +15,7 @@ import {
 import { useAuth } from '../contexts/AuthContext'
 import { Link } from 'react-router-dom'
 import clsx from 'clsx'
+import AIAssistantButton from './AIAssistantButton'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
@@ -152,6 +153,9 @@ const Layout = () => {
             <Outlet />
           </div>
         </main>
+
+        {/* AI Assistant Floating Button */}
+        <AIAssistantButton />
       </div>
     </div>
   )

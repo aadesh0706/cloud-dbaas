@@ -662,7 +662,7 @@ storage:
         port: 3306,
         user: 'root',
         password: process.env.MYSQL_ROOT_PASSWORD || 'mysql123',
-        database: database.name
+        database: database.database_name || database.database || database.name
       });
     } else if (engine === 'postgresql') {
       const { Client } = require('pg');
@@ -671,7 +671,7 @@ storage:
         port: 5432,
         user: process.env.POSTGRES_USER || 'postgres',
         password: process.env.POSTGRES_PASSWORD || 'password',
-        database: database.name
+        database: database.database || database.name
       });
       await client.connect();
       return client;
@@ -695,11 +695,12 @@ storage:
       const { engine } = database;
 
       if (engine === 'mysql') {
+        const databaseName = database.database_name || database.database || database.name;
         const [tables] = await connection.execute(
           'SELECT TABLE_NAME as name, TABLE_TYPE as type, ENGINE as engine, ' +
           'TABLE_ROWS as row_count, CREATE_TIME as created_at ' +
           'FROM information_schema.TABLES WHERE TABLE_SCHEMA = ?',
-          [database.name]
+          [databaseName]
         );
         
         return {
@@ -1044,7 +1045,8 @@ storage:
       replicas: db.replicas,
       projectName: db.project_name,
       createdAt: db.created_at,
-      updatedAt: db.updated_at
+      updatedAt: db.updated_at,
+      database_name: db.database_name
     };
   }
 }

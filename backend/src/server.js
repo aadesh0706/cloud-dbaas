@@ -10,6 +10,7 @@ const databaseRoutes = require('./routes/databases');
 const monitoringRoutes = require('./routes/monitoring');
 const projectRoutes = require('./routes/projects');
 const performanceRoutes = require('./routes/performance');
+const aiAssistantRoutes = require('./routes/ai-assistant');
 
 const errorHandler = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
@@ -87,6 +88,7 @@ app.use('/api/databases', databaseRoutes);
 app.use('/api/monitoring', monitoringRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/performance', performanceRoutes);
+app.use('/api/ai-assistant', aiAssistantRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

@@ -86,4 +86,15 @@ export const monitoringAPI = {
   getAlerts: () => api.get('/monitoring/alerts'),
 }
 
+// AI Assistant API
+export const aiAssistantAPI = {
+  chat: (message, context = {}) => api.post('/ai-assistant/chat', { message, context }),
+  getCapabilities: () => api.get('/ai-assistant/capabilities'),
+  getHistory: (limit = 20) => api.get(`/ai-assistant/history?limit=${limit}`),
+  suggestSchema: (purpose, industry, expectedLoad) => 
+    api.post('/ai-assistant/suggest-schema', { purpose, industry, expectedLoad }),
+  generateCode: (databaseId, language = 'nodejs', operation = 'connect') =>
+    api.post('/ai-assistant/generate-code', { databaseId, language, operation })
+}
+
 export default api
