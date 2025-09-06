@@ -4,6 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const { Pool } = require('pg');
 
 const authRoutes = require('./routes/auth');
 const databaseRoutes = require('./routes/databases');
@@ -64,7 +65,6 @@ app.get('/health', (req, res) => {
 
 // Database connectivity test endpoint
 app.get('/db-test', async (req, res) => {
-  const { Pool } = require('pg');
   const pool = new Pool({
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
