@@ -82,17 +82,20 @@ app.get('/env-test', (req, res) => {
 
 // Database connectivity test endpoint
 app.get('/db-test', async (req, res) => {
-  const pool = new Pool({
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    database: process.env.DB_NAME,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-  });
-
   try {
+    // Simple test without pool management
+    const pool = new Pool({
+      host: process.env.DB_HOST,
+      port: parseInt(process.env.DB_PORT) || 5432,
+      database: process.env.DB_NAME,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      ssl: { rejectUnauthorized: false }
+    });
+    
     const result = await pool.query('SELECT NOW() as current_time');
     await pool.end();
+    
     res.json({
       status: 'success',
       message: 'Database connection successful',
@@ -101,20 +104,22 @@ app.get('/db-test', async (req, res) => {
         host: process.env.DB_HOST,
         port: process.env.DB_PORT,
         database: process.env.DB_NAME,
-        user: process.env.DB_USER
+        user: process.env.DB_USER,
+        passwordSet: !!process.env.DB_PASSWORD
       }
     });
   } catch (error) {
-    await pool.end();
     res.status(500).json({
       status: 'error',
       message: 'Database connection failed',
       error: error.message,
+      stack: error.stack,
       config: {
         host: process.env.DB_HOST,
         port: process.env.DB_PORT,
         database: process.env.DB_NAME,
-        user: process.env.DB_USER
+        user: process.env.DB_USER,
+        passwordSet: !!process.env.DB_PASSWORD
       }
     });
   }
@@ -178,8 +183,9 @@ app.listen(PORT, async () => {
   logger.info(`🚀 DBaaS Backend Server running on port ${PORT}`);
   logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
   
-  // Initialize database tables
-  await initDatabase();
+  // Temporarily disable database initialization for debugging
+  // await initDatabase();
+  logger.info('⚠️ Database initialization disabled for debugging');
   
   // Initialize cleanup service
   const cleanupService = new CleanupService();
