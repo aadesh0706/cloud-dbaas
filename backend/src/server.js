@@ -63,6 +63,23 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Environment variables test endpoint
+app.get('/env-test', (req, res) => {
+  res.json({
+    status: 'success',
+    environment: process.env.NODE_ENV,
+    dbConfig: {
+      host: process.env.DB_HOST ? 'SET' : 'NOT_SET',
+      port: process.env.DB_PORT ? 'SET' : 'NOT_SET',
+      database: process.env.DB_NAME ? 'SET' : 'NOT_SET',
+      user: process.env.DB_USER ? 'SET' : 'NOT_SET',
+      password: process.env.DB_PASSWORD ? 'SET' : 'NOT_SET',
+      jwtSecret: process.env.JWT_SECRET ? 'SET' : 'NOT_SET',
+      corsOrigin: process.env.CORS_ORIGIN || 'NOT_SET'
+    }
+  });
+});
+
 // Database connectivity test endpoint
 app.get('/db-test', async (req, res) => {
   const pool = new Pool({
