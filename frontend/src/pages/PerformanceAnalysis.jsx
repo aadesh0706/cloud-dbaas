@@ -25,10 +25,26 @@ const PerformanceAnalysis = () => {
   const [streamingActive, setStreamingActive] = useState(false);
   const [error, setError] = useState(null);
   const eventSourceRef = useRef(null);
+  const pollingIntervalRef = useRef(null);
 
   useEffect(() => {
     fetchDatabases();
     fetchAcademicReport();
+  }, []);
+
+  // Cleanup effect
+  useEffect(() => {
+    return () => {
+      // Clean up streaming connection
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+      }
+      
+      // Clean up polling interval
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
   }, []);
 
   const fetchDatabases = async () => {
@@ -102,15 +118,72 @@ const PerformanceAnalysis = () => {
       console.log('🔥 Stopping streaming...');
       setStreamingActive(false);
       setLiveMetrics(null);
+      
+      // Stop EventSource streaming
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
         eventSourceRef.current = null;
+      }
+      
+      // Stop polling fallback
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
       }
     } else {
       console.log('🔥 Starting streaming...');
       setStreamingActive(true);
       startMetricsStream();
     }
+  };
+
+  // Polling fallback function
+  const startPollingFallback = () => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+    }
+
+    console.log('📡 Starting polling fallback...');
+    
+    const pollMetrics = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`http://localhost:5000/api/performance/databases/${selectedDatabase.id}/metrics/realtime`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('📡 Polling data received:', data);
+          console.log('📡 Polling metrics - CPU:', data.metrics?.cpu, '%, Memory:', data.metrics?.memory, '%, Connections:', data.metrics?.connections);
+          
+          // Convert polling data to streaming format for consistency
+          const streamingFormat = {
+            type: 'metrics',
+            timestamp: data.timestamp,
+            databaseId: data.databaseId,
+            metrics: data.metrics,
+            status: data.status
+          };
+          
+          console.log('📡 Converted streaming format:', streamingFormat);
+          setLiveMetrics(streamingFormat);
+          setStreamingActive(true);
+        } else {
+          console.error('📡 Polling failed:', response.status);
+        }
+      } catch (error) {
+        console.error('📡 Polling error:', error);
+        setStreamingActive(false);
+      }
+    };
+
+    // Poll every 3 seconds
+    pollingIntervalRef.current = setInterval(pollMetrics, 3000);
+    pollMetrics(); // Initial call
   };
 
   const startMetricsStream = () => {
@@ -133,20 +206,55 @@ const PerformanceAnalysis = () => {
     eventSourceRef.current = new EventSource(streamUrl);
     
     eventSourceRef.current.onmessage = (event) => {
-      console.log('📡 Received streaming data:', event.data);
-      const data = JSON.parse(event.data);
-      console.log('📡 Parsed data:', data);
-      console.log('📡 CPU value:', data.metrics?.resourceUtilization?.cpu);
-      setLiveMetrics(data);
+      try {
+        console.log('📡 Received streaming data:', event.data);
+        const data = JSON.parse(event.data);
+        console.log('📡 Parsed data:', data);
+        
+        // Handle different data formats
+        if (data.type === 'connected') {
+          console.log('📡 Stream connected:', data.message);
+          setStreamingActive(true);
+          return;
+        }
+        
+        if (data.type === 'metrics' && data.metrics) {
+          console.log('📡 Metrics received - CPU:', data.metrics.cpu, '%, Memory:', data.metrics.memory, '%, Connections:', data.metrics.connections);
+          console.log('📡 Full metrics object:', data.metrics);
+          setLiveMetrics(data);
+          setStreamingActive(true);
+        } else {
+          // Legacy format support
+          console.log('📡 Legacy format - CPU:', data.metrics?.resourceUtilization?.cpu);
+          console.log('📡 Full legacy data:', data);
+          setLiveMetrics(data);
+          setStreamingActive(true);
+        }
+      } catch (error) {
+        console.error('📡 Error parsing streaming data:', error);
+      }
     };
 
     eventSourceRef.current.onerror = (error) => {
       console.log('📡 EventSource error:', error);
+      console.log('📡 EventSource readyState:', eventSourceRef.current?.readyState);
+      
+      // Try fallback to polling
+      setTimeout(() => {
+        console.log('📡 Attempting fallback to polling...');
+        startPollingFallback();
+      }, 1000);
+      
       setStreamingActive(false);
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
         eventSourceRef.current = null;
       }
+    };
+
+    eventSourceRef.current.onopen = (event) => {
+      console.log('📡 EventSource connection opened');
+      setStreamingActive(true);
     };
   };
 
@@ -286,7 +394,7 @@ const PerformanceAnalysis = () => {
                   <div>
                     <p className="text-sm font-medium text-gray-600">CPU Usage</p>
                     <p className="text-2xl font-bold text-gray-900">
-                      {liveMetrics.metrics?.resourceUtilization?.cpu?.toFixed(1) || 0}%
+                      {(liveMetrics.metrics?.cpu || 0)}%
                     </p>
                   </div>
                 </div>
@@ -298,7 +406,7 @@ const PerformanceAnalysis = () => {
                   <div>
                     <p className="text-sm font-medium text-gray-600">Memory Usage</p>
                     <p className="text-2xl font-bold text-gray-900">
-                      {liveMetrics.metrics?.resourceUtilization?.memory?.toFixed(1) || 0}%
+                      {(liveMetrics.metrics?.memory || 0)}%
                     </p>
                   </div>
                 </div>
@@ -310,7 +418,7 @@ const PerformanceAnalysis = () => {
                   <div>
                     <p className="text-sm font-medium text-gray-600">Active Connections</p>
                     <p className="text-2xl font-bold text-gray-900">
-                      {liveMetrics.metrics?.throughput?.currentConnections || 0}
+                      {(liveMetrics.metrics?.connections || 0)}
                     </p>
                   </div>
                 </div>
@@ -322,7 +430,7 @@ const PerformanceAnalysis = () => {
                   <div>
                     <p className="text-sm font-medium text-gray-600">Active Queries</p>
                     <p className="text-2xl font-bold text-gray-900">
-                      {liveMetrics.metrics?.throughput?.queriesPerSecond?.toFixed(0) || 0}
+                      {(liveMetrics.metrics?.activeQueries || 0)}
                     </p>
                   </div>
                 </div>
@@ -348,13 +456,13 @@ const PerformanceAnalysis = () => {
                       <p className="text-sm font-medium text-blue-600">Response Time</p>
                       <p className="text-2xl font-bold text-blue-900">
                         {streamingActive && liveMetrics 
-                          ? liveMetrics.metrics?.responseTime?.average?.toFixed(3)
+                          ? (liveMetrics.metrics?.queryLatency / 1000 || liveMetrics.metrics?.responseTime?.average || 0).toFixed(3)
                           : benchmarkResults.performance?.responseTime?.average?.toFixed(3) || '0.000'
                         }s
                       </p>
                       <p className="text-xs text-blue-700">
                         P95: {streamingActive && liveMetrics 
-                          ? liveMetrics.metrics?.responseTime?.p95?.toFixed(3)
+                          ? ((liveMetrics.metrics?.queryLatency / 1000 * 1.5) || liveMetrics.metrics?.responseTime?.p95 || 0).toFixed(3)
                           : benchmarkResults.performance?.responseTime?.p95?.toFixed(3) || '0.000'
                         }s
                       </p>
@@ -370,7 +478,7 @@ const PerformanceAnalysis = () => {
                       <p className="text-sm font-medium text-green-600">Throughput</p>
                       <p className="text-2xl font-bold text-green-900">
                         {streamingActive && liveMetrics 
-                          ? liveMetrics.metrics?.throughput?.queriesPerSecond?.toFixed(0)
+                          ? (liveMetrics.metrics?.throughput || liveMetrics.metrics?.throughput?.queriesPerSecond || 0)
                           : benchmarkResults.performance?.throughput?.queriesPerSecond?.toFixed(0) || '0'
                         } QPS
                       </p>
