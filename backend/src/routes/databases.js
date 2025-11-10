@@ -10,10 +10,13 @@ const DatabaseService = process.env.NODE_ENV === 'production'
   ? require('../services/DatabaseService.production')
   : require('../services/DatabaseService');
 
+const RelationshipStoryService = require('../services/RelationshipStoryService');
+
 const logger = require('../utils/logger');
 
 const router = express.Router();
 const databaseService = new DatabaseService();
+const relationshipStoryService = new RelationshipStoryService();
 
 // Validation schemas
 const createDatabaseSchema = Joi.object({
@@ -379,6 +382,38 @@ router.patch('/:id/scale', authMiddleware, async (req, res) => {
     res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to scale database'
+    });
+  }
+});
+
+// Get relationship story for a database
+router.get('/:id/relationship-story', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.userId;
+
+    logger.info(`📖 Generating relationship story for database: ${id}`);
+
+    // Get database details
+    const database = await databaseService.getDatabaseById(id, userId);
+    if (!database) {
+      return res.status(404).json({
+        error: 'Database Not Found',
+        message: 'Database not found or access denied'
+      });
+    }
+
+    // Generate relationship story
+    const storyResult = await relationshipStoryService.generateRelationshipStory(database);
+
+    res.json(storyResult);
+
+  } catch (error) {
+    logger.error('Get relationship story error:', error);
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to generate relationship story',
+      details: error.message
     });
   }
 });

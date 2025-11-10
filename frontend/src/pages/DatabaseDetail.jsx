@@ -10,7 +10,8 @@ import {
   ServerIcon,
   ChartBarIcon,
   TableCellsIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  BookOpenIcon
 } from '@heroicons/react/24/outline'
 import { databasesAPI, monitoringAPI } from '../services/api'
 import LoadingSpinner from '../components/LoadingSpinner'
@@ -18,6 +19,7 @@ import MetricCard from '../components/MetricCard'
 import DatabaseMetricsChart from '../components/DatabaseMetricsChart'
 import ConnectionModal from '../components/ConnectionModal'
 import DatabaseSchemaExplorer from '../components/DatabaseSchemaExplorer'
+import RelationshipStory from '../components/RelationshipStory'
 import toast from 'react-hot-toast'
 
 const DatabaseDetail = () => {
@@ -156,6 +158,7 @@ const DatabaseDetail = () => {
         <nav className="-mb-px flex space-x-8">
           {[
             { id: 'overview', name: 'Overview', icon: ChartBarIcon },
+            { id: 'relationships', name: 'Relationship Story', icon: BookOpenIcon },
             { id: 'schema', name: 'Schema & Data', icon: TableCellsIcon },
             { id: 'monitoring', name: 'Monitoring', icon: DocumentTextIcon }
           ].map((tab) => (
@@ -280,6 +283,13 @@ const DatabaseDetail = () => {
           )}
         </div>
       )}
+        </div>
+      )}
+
+      {/* Relationship Story Tab */}
+      {activeTab === 'relationships' && (
+        <div className="space-y-6">
+          <RelationshipStory databaseId={id} />
         </div>
       )}
 
