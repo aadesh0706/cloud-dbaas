@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-import Layout from '../components/Layout';
+import { backupsAPI, databasesAPI } from '../services/api';
 
 const Backups = () => {
   const [backups, setBackups] = useState([]);
@@ -13,18 +12,16 @@ const Backups = () => {
 
   const fetchBackups = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const res = await axios.get('/api/backups', { headers: { Authorization: `Bearer ${token}` } });
-      setBackups(res.data.backups);
+      const res = await backupsAPI.getAll();
+      setBackups(res.backups || []);
     } catch (e) { console.error(e); }
     setLoading(false);
   };
 
   const fetchDatabases = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const res = await axios.get('/api/databases', { headers: { Authorization: `Bearer ${token}` } });
-      setDatabases(res.data.databases);
+      const res = await databasesAPI.getAll();
+      setDatabases(res.databases || []);
     } catch (e) { console.error(e); }
   };
 
@@ -33,26 +30,23 @@ const Backups = () => {
     if (!selectedDatabase) return;
     setCreating(true);
     try {
-      const token = localStorage.getItem('token');
-      await axios.post('/api/backups', { databaseId: selectedDatabase }, { headers: { Authorization: `Bearer ${token}` } });
+      await backupsAPI.create(selectedDatabase);
       await fetchBackups();
       setSelectedDatabase('');
-    } catch (e) { alert('Failed'); }
+    } catch (e) { alert('Failed to create backup'); }
     setCreating(false);
   };
 
   const deleteBackup = async (id) => {
     if (!window.confirm('Delete backup?')) return;
     try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`/api/backups/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      await backupsAPI.delete(id);
       fetchBackups();
-    } catch (e) {}
+    } catch (e) { console.error(e); }
   };
 
   return (
-    <Layout>
-      <div className="p-6">
+    <div className="p-6">
         <h1 className="text-2xl font-bold mb-6">Database Backups</h1>
         <div className="bg-white p-4 rounded-lg shadow mb-6">
           <form onSubmit={createBackup} className="flex gap-4">
@@ -74,7 +68,6 @@ const Backups = () => {
           )}
         </div>
       </div>
-    </Layout>
   );
 };
 export default Backups;
