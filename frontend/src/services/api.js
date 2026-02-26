@@ -97,4 +97,12 @@ export const aiAssistantAPI = {
     api.post('/ai-assistant/generate-code', { databaseId, language, operation })
 }
 
+// Backups API
+export const backupsAPI = {
+  getAll: () => api.get('/backups'),
+  create: (databaseId) => api.post('/backups', { databaseId }),
+  delete: (id) => api.delete(`/backups/${id}`),
+  restore: (id) => api.post(`/backups/${id}/restore`),
+}
+
 export default api

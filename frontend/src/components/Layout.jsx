@@ -6,6 +6,7 @@ import {
   FolderIcon, 
   ChartBarIcon,
   CpuChipIcon,
+  CloudArrowUpIcon,
   Cog6ToothIcon,
   UserCircleIcon,
   ArrowRightOnRectangleIcon,
@@ -23,6 +24,7 @@ const navigation = [
   { name: 'Projects', href: '/projects', icon: FolderIcon },
   { name: 'Monitoring', href: '/monitoring', icon: ChartBarIcon },
   { name: 'Performance', href: '/performance', icon: CpuChipIcon },
+  { name: 'Backups', href: '/backups', icon: CloudArrowUpIcon },
 ]
 
 const Layout = () => {

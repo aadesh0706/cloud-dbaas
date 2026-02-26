@@ -16,6 +16,7 @@ import ProjectDetail from './pages/ProjectDetail'
 import Monitoring from './pages/Monitoring'
 import PerformanceAnalysis from './pages/PerformanceAnalysis'
 import CreateDatabase from './pages/CreateDatabase'
+import Backups from './pages/Backups'
 import LoadingSpinner from './components/LoadingSpinner'
 
 function App() {
@@ -54,6 +55,7 @@ function App() {
               <Route path="projects/:id" element={<ProjectDetail />} />
               <Route path="monitoring" element={<Monitoring />} />
               <Route path="performance" element={<PerformanceAnalysis />} />
+              <Route path="backups" element={<Backups />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Route>
           )}
