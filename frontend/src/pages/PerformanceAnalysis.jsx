@@ -49,39 +49,39 @@ const PerformanceAnalysis = () => {
 
   const fetchDatabases = async () => {
     try {
-      console.log('Fetching databases...');
+      // Fetching databases
       const response = await api.get('/databases');
-      console.log('Databases response:', response);
+      // Databases response received
       const databases = response.databases || [];
-      console.log('Parsed databases:', databases);
+      // Parsed databases
       setDatabases(databases);
       if (databases.length > 0) {
         setSelectedDatabase(databases[0]);
-        console.log('Selected database:', databases[0]);
+        // Selected database
         fetchPerformanceData(databases[0].id);
       }
     } catch (error) {
-      console.error('Error fetching databases:', error);
+      // Error fetching databases
       setError(`Failed to fetch databases: ${error.message}`);
     }
   };
 
   const fetchPerformanceData = async (databaseId) => {
     try {
-      console.log('Fetching performance data for database:', databaseId);
+      // Fetching performance data
       setLoading(true);
       const [performanceResponse, comparisonResponse] = await Promise.all([
         api.get(`/performance/databases/${databaseId}/performance`),
         api.get(`/performance/databases/${databaseId}/comparison`)
       ]);
       
-      console.log('Performance response:', performanceResponse);
-      console.log('Comparison response:', comparisonResponse);
+      // Performance response received
+      // Comparison response received
       
       setBenchmarkResults(performanceResponse);
       setComparisonData(comparisonResponse);
     } catch (error) {
-      console.error('Error fetching performance data:', error);
+      // Error fetching performance data
       setError(`Failed to fetch performance data: ${error.message}`);
     } finally {
       setLoading(false);
@@ -93,7 +93,7 @@ const PerformanceAnalysis = () => {
       const response = await api.get('/performance/academic-report');
       setAcademicReport(response);
     } catch (error) {
-      console.error('Error fetching academic report:', error);
+      // Error fetching academic report
     }
   };
 
@@ -105,7 +105,7 @@ const PerformanceAnalysis = () => {
       const response = await api.post(`/performance/databases/${selectedDatabase.id}/benchmark`);
       setBenchmarkResults(response);
     } catch (error) {
-      console.error('Error running benchmark:', error);
+      // Error running benchmark
       setError(`Failed to run benchmark: ${error.message}`);
     } finally {
       setBenchmarkRunning(false);
@@ -113,9 +113,9 @@ const PerformanceAnalysis = () => {
   };
 
   const toggleLiveMetrics = () => {
-    console.log('🔥 Toggle Live Metrics clicked. Current streaming:', streamingActive);
+    // Toggle live metrics clicked
     if (streamingActive) {
-      console.log('🔥 Stopping streaming...');
+      // Stopping streaming
       setStreamingActive(false);
       setLiveMetrics(null);
       
@@ -131,7 +131,7 @@ const PerformanceAnalysis = () => {
         pollingIntervalRef.current = null;
       }
     } else {
-      console.log('🔥 Starting streaming...');
+      // Starting streaming
       setStreamingActive(true);
       startMetricsStream();
     }
@@ -143,7 +143,7 @@ const PerformanceAnalysis = () => {
       clearInterval(pollingIntervalRef.current);
     }
 
-    console.log('📡 Starting polling fallback...');
+    // Starting polling fallback
     
     const pollMetrics = async () => {
       try {
@@ -157,8 +157,8 @@ const PerformanceAnalysis = () => {
 
         if (response.ok) {
           const data = await response.json();
-          console.log('📡 Polling data received:', data);
-          console.log('📡 Polling metrics - CPU:', data.metrics?.cpu, '%, Memory:', data.metrics?.memory, '%, Connections:', data.metrics?.connections);
+          // Polling data received
+          // Polling metrics logged
           
           // Convert polling data to streaming format for consistency
           const streamingFormat = {
@@ -169,14 +169,14 @@ const PerformanceAnalysis = () => {
             status: data.status
           };
           
-          console.log('📡 Converted streaming format:', streamingFormat);
+          // Converted streaming format
           setLiveMetrics(streamingFormat);
           setStreamingActive(true);
         } else {
-          console.error('📡 Polling failed:', response.status);
+          // Polling failed
         }
       } catch (error) {
-        console.error('📡 Polling error:', error);
+        // Polling error
         setStreamingActive(false);
       }
     };
@@ -187,15 +187,15 @@ const PerformanceAnalysis = () => {
   };
 
   const startMetricsStream = () => {
-    console.log('🔥 startMetricsStream called');
+    // startMetricsStream called
     if (!selectedDatabase) {
-      console.log('🔥 No selected database');
+      // No selected database
       return;
     }
 
     const token = localStorage.getItem('token');
     const streamUrl = `http://localhost:5000/api/performance/databases/${selectedDatabase.id}/performance/stream?token=${encodeURIComponent(token)}`;
-    console.log('🔥 Stream URL:', streamUrl);
+    // Stream URL logged
     
     // Close existing connection if any
     if (eventSourceRef.current) {
@@ -207,41 +207,41 @@ const PerformanceAnalysis = () => {
     
     eventSourceRef.current.onmessage = (event) => {
       try {
-        console.log('📡 Received streaming data:', event.data);
+        // Received streaming data
         const data = JSON.parse(event.data);
-        console.log('📡 Parsed data:', data);
+        // Parsed data
         
         // Handle different data formats
         if (data.type === 'connected') {
-          console.log('📡 Stream connected:', data.message);
+          // Stream connected
           setStreamingActive(true);
           return;
         }
         
         if (data.type === 'metrics' && data.metrics) {
-          console.log('📡 Metrics received - CPU:', data.metrics.cpu, '%, Memory:', data.metrics.memory, '%, Connections:', data.metrics.connections);
-          console.log('📡 Full metrics object:', data.metrics);
+          // Metrics received logged
+          // Full metrics object logged
           setLiveMetrics(data);
           setStreamingActive(true);
         } else {
           // Legacy format support
-          console.log('📡 Legacy format - CPU:', data.metrics?.resourceUtilization?.cpu);
-          console.log('📡 Full legacy data:', data);
+          // Legacy format logged
+          // Full legacy data logged
           setLiveMetrics(data);
           setStreamingActive(true);
         }
       } catch (error) {
-        console.error('📡 Error parsing streaming data:', error);
+        // Error parsing streaming data
       }
     };
 
     eventSourceRef.current.onerror = (error) => {
-      console.log('📡 EventSource error:', error);
-      console.log('📡 EventSource readyState:', eventSourceRef.current?.readyState);
+      // EventSource error logged
+      // EventSource readyState logged
       
       // Try fallback to polling
       setTimeout(() => {
-        console.log('📡 Attempting fallback to polling...');
+        // Attempting fallback to polling
         startPollingFallback();
       }, 1000);
       
@@ -253,7 +253,7 @@ const PerformanceAnalysis = () => {
     };
 
     eventSourceRef.current.onopen = (event) => {
-      console.log('📡 EventSource connection opened');
+      // EventSource connection opened
       setStreamingActive(true);
     };
   };
@@ -284,7 +284,7 @@ const PerformanceAnalysis = () => {
         window.URL.revokeObjectURL(url);
       }
     } catch (error) {
-      console.error('Error exporting performance data:', error);
+      // Error exporting performance data
     }
   };
 
