@@ -14,6 +14,7 @@ import { projectsAPI } from '../services/api'
 import LoadingSpinner from '../components/LoadingSpinner'
 import CreateProjectModal from '../components/CreateProjectModal'
 import { DatabaseCardSkeleton, Skeleton } from '../components/Skeleton'
+import EmptyState from '../components/EmptyState'
 import toast from 'react-hot-toast'
 import clsx from 'clsx'
 
@@ -109,26 +110,16 @@ const Projects = () => {
 
       {/* Projects Grid */}
       {filteredProjects.length === 0 ? (
-        <div className="text-center py-12">
-          <FolderIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {projects.length === 0 ? 'No projects yet' : 'No projects match your search'}
-          </h3>
-          <p className="text-gray-600 mb-6">
-            {projects.length === 0 
-              ? 'Create your first project to organize your databases'
-              : 'Try adjusting your search criteria'
-            }
-          </p>
-          {projects.length === 0 && (
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="btn-primary px-6 py-3"
-            >
-              Create Project
-            </button>
-          )}
-        </div>
+        <EmptyState
+          icon={FolderIcon}
+          title={projects.length === 0 ? 'No projects yet' : 'No projects match your search'}
+          description={projects.length === 0 
+            ? 'Create your first project to organize your databases'
+            : 'Try adjusting your search criteria'
+          }
+          actionLabel={projects.length === 0 ? 'Create Project' : undefined}
+          onAction={projects.length === 0 ? () => setShowCreateModal(true) : undefined}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProjects.map((project) => (

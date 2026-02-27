@@ -12,12 +12,14 @@ import { databasesAPI } from '../services/api'
 import LoadingSpinner from '../components/LoadingSpinner'
 import DatabaseCard from '../components/DatabaseCard'
 import { DatabaseCardSkeleton, Skeleton } from '../components/Skeleton'
+import EmptyState from '../components/EmptyState'
+import { useDebouncedSearch } from '../hooks/useDebounce'
 import clsx from 'clsx'
 
 const Databases = () => {
-  const [searchTerm, setSearchTerm] = useState('')
   const [filterEngine, setFilterEngine] = useState('all')
   const [filterStatus, setFilterStatus] = useState('all')
+  const { searchTerm, setSearchTerm, debouncedTerm } = useDebouncedSearch('', 300)
 
   const { data: response, isLoading, refetch } = useQuery(
     'databases',
@@ -28,8 +30,8 @@ const Databases = () => {
 
   // Filter databases
   const filteredDatabases = databases.filter(db => {
-    const matchesSearch = db.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         db.engine.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = db.name.toLowerCase().includes(debouncedTerm.toLowerCase()) ||
+                         db.engine.toLowerCase().includes(debouncedTerm.toLowerCase())
     const matchesEngine = filterEngine === 'all' || db.engine === filterEngine
     const matchesStatus = filterStatus === 'all' || db.status === filterStatus
     
@@ -127,23 +129,16 @@ const Databases = () => {
 
       {/* Databases Grid */}
       {filteredDatabases.length === 0 ? (
-        <div className="text-center py-12">
-          <CircleStackIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {databases.length === 0 ? 'No databases yet' : 'No databases match your filters'}
-          </h3>
-          <p className="text-gray-600 mb-6">
-            {databases.length === 0 
-              ? 'Create your first database to get started'
-              : 'Try adjusting your search or filter criteria'
-            }
-          </p>
-          {databases.length === 0 && (
-            <Link to="/databases/new" className="btn-primary px-6 py-3">
-              Create Database
-            </Link>
-          )}
-        </div>
+        <EmptyState
+          icon={CircleStackIcon}
+          title={databases.length === 0 ? 'No databases yet' : 'No databases match your filters'}
+          description={databases.length === 0 
+            ? 'Create your first database to get started'
+            : 'Try adjusting your search or filter criteria'
+          }
+          actionLabel={databases.length === 0 ? 'Create Database' : undefined}
+          actionHref={databases.length === 0 ? '/databases/new' : undefined}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredDatabases.map((database) => (
