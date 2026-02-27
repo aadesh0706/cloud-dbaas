@@ -98,7 +98,7 @@ const Layout = () => {
         </nav>
 
         {/* User profile section */}
-        <div className="p-4 border-t border-gray-200">
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-3">
             <UserCircleIcon className="w-8 h-8 text-gray-400" />
             <div className="flex-1 min-w-0">
@@ -151,7 +151,7 @@ const Layout = () => {
               </button>
               <div className="hidden lg:flex lg:items-center lg:space-x-2">
                 <UserCircleIcon className="w-6 h-6 text-gray-400" />
-                <span className="text-sm text-gray-700">
+                <span className="text-sm text-gray-700 dark:text-gray-300">
                   {user?.firstName} {user?.lastName}
                 </span>
               </div>

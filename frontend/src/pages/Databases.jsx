@@ -51,8 +51,8 @@ const Databases = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Databases</h1>
-          <p className="text-gray-600">Manage your database instances</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Databases</h1>
+          <p className="text-gray-600 dark:text-gray-400">Manage your database instances</p>
         </div>
         <Link
           to="/databases/new"

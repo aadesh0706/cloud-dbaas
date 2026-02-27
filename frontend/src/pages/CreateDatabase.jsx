@@ -96,8 +96,8 @@ const CreateDatabase = () => {
           <ArrowLeftIcon className="w-5 h-5" />
         </button>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Create Database</h1>
-          <p className="text-gray-600">Deploy a new database instance</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Create Database</h1>
+          <p className="text-gray-600 dark:text-gray-400">Deploy a new database instance</p>
         </div>
       </div>
 
@@ -119,7 +119,7 @@ const CreateDatabase = () => {
               >
                 <div className="text-center">
                   <div className="text-3xl mb-2">{config.icon}</div>
-                  <h3 className="font-semibold text-gray-900">{config.name}</h3>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">{config.name}</h3>
                   <p className="text-sm text-gray-600 mt-1">{config.description}</p>
                 </div>
               </div>
@@ -259,7 +259,7 @@ const CreateDatabase = () => {
         </div>
 
         {/* Cost Estimation */}
-        <div className="card p-6 bg-gray-50">
+        <div className="card p-6 bg-gray-50 dark:bg-gray-900">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Estimated Cost</h2>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">

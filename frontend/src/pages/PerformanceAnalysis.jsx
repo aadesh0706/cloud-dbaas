@@ -311,7 +311,7 @@ const PerformanceAnalysis = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Performance Analysis & Benchmarking</h1>
-          <p className="text-gray-600">Compare your Cloud DBaaS performance with industry standards</p>
+          <p className="text-gray-600 dark:text-gray-400">Compare your Cloud DBaaS performance with industry standards</p>
         </div>
 
         {error && (
@@ -324,7 +324,7 @@ const PerformanceAnalysis = () => {
         )}
 
         {/* Database Selection */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div className="bg-white rounded-lg shadow-sm dark:shadow-gray-700/50 p-6 mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div>
@@ -351,7 +351,7 @@ const PerformanceAnalysis = () => {
               </div>
               
               {selectedDatabase && (
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600 dark:text-gray-400">
                   <p><strong>Engine:</strong> {selectedDatabase.engine}</p>
                   <p><strong>Status:</strong> {selectedDatabase.status}</p>
                 </div>
@@ -385,15 +385,15 @@ const PerformanceAnalysis = () => {
 
         {/* Live Metrics */}
         {streamingActive && liveMetrics && (
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <div className="bg-white rounded-lg shadow-sm dark:shadow-gray-700/50 p-6 mb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Live Performance Metrics</h3>
             <div className="grid grid-cols-4 gap-4">
               <div className="bg-blue-50 p-4 rounded-lg">
                 <div className="flex items-center">
                   <CpuChipIcon className="w-8 h-8 text-blue-600 mr-3" />
                   <div>
-                    <p className="text-sm font-medium text-gray-600">CPU Usage</p>
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">CPU Usage</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
                       {(liveMetrics.metrics?.cpu || 0)}%
                     </p>
                   </div>
@@ -404,8 +404,8 @@ const PerformanceAnalysis = () => {
                 <div className="flex items-center">
                   <ServerIcon className="w-8 h-8 text-green-600 mr-3" />
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Memory Usage</p>
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Memory Usage</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
                       {(liveMetrics.metrics?.memory || 0)}%
                     </p>
                   </div>
@@ -416,8 +416,8 @@ const PerformanceAnalysis = () => {
                 <div className="flex items-center">
                   <ClockIcon className="w-8 h-8 text-yellow-600 mr-3" />
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Active Connections</p>
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Connections</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
                       {(liveMetrics.metrics?.connections || 0)}
                     </p>
                   </div>
@@ -428,8 +428,8 @@ const PerformanceAnalysis = () => {
                 <div className="flex items-center">
                   <ChartBarIcon className="w-8 h-8 text-purple-600 mr-3" />
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Active Queries</p>
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Queries</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
                       {(liveMetrics.metrics?.activeQueries || 0)}
                     </p>
                   </div>
@@ -442,7 +442,7 @@ const PerformanceAnalysis = () => {
         {/* Performance Results */}
         {benchmarkResults && (
           <>
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div className="bg-white rounded-lg shadow-sm dark:shadow-gray-700/50 p-6 mb-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Performance Testing - {selectedDatabase.name}
               </h3>
@@ -549,7 +549,7 @@ const PerformanceAnalysis = () => {
 
         {/* Comparison Section */}
         {comparisonData && (
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <div className="bg-white rounded-lg shadow-sm dark:shadow-gray-700/50 p-6 mb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               Comparison with Existing DBaaS Systems
             </h3>
@@ -558,19 +558,19 @@ const PerformanceAnalysis = () => {
                 <div className="text-3xl font-bold text-green-600 mb-2">
                   {comparisonData.comparison?.advantages?.[0]?.value || 'N/A'}
                 </div>
-                <p className="text-sm text-gray-600">Response Time Advantage</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Response Time Advantage</p>
                 <p className="text-xs text-gray-500">Systems outperformed</p>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-blue-600 mb-2">100%</div>
-                <p className="text-sm text-gray-600">Cost Advantage</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Cost Advantage</p>
                 <p className="text-xs text-gray-500">Open source benefit</p>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-purple-600 mb-2">
                   {comparisonData.comparison?.ranking || 'N/A'}
                 </div>
-                <p className="text-sm text-gray-600">Overall Ranking</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Overall Ranking</p>
                 <p className="text-xs text-gray-500">Among tested systems</p>
               </div>
             </div>
@@ -579,7 +579,7 @@ const PerformanceAnalysis = () => {
 
         {/* Academic Analysis */}
         {academicReport && (
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="bg-white rounded-lg shadow-sm dark:shadow-gray-700/50 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Academic Analysis</h3>
             <div className="grid grid-cols-2 gap-8">
               {/* Grafana Integration */}

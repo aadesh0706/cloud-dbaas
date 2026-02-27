@@ -79,7 +79,7 @@ const DatabaseCard = ({ database, onRefresh }) => {
         <div className="flex items-center space-x-3">
           <div className="text-2xl">{getEngineIcon(database.engine)}</div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
               <Link
                 to={`/databases/${database.id}`}
                 className="hover:text-primary-600 transition-colors"
@@ -94,7 +94,7 @@ const DatabaseCard = ({ database, onRefresh }) => {
         </div>
 
         <Menu as="div" className="relative">
-          <Menu.Button className="p-1 text-gray-400 hover:text-gray-600">
+          <Menu.Button className="p-1 text-gray-400 hover:text-gray-600 dark:text-gray-400">
             <EllipsisVerticalIcon className="w-5 h-5" />
           </Menu.Button>
           <Menu.Items className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
@@ -167,11 +167,11 @@ const DatabaseCard = ({ database, onRefresh }) => {
 
       {/* Resource Info */}
       <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-        <div className="flex items-center text-gray-600">
+        <div className="flex items-center text-gray-600 dark:text-gray-400">
           <CpuChipIcon className="w-4 h-4 mr-2" />
           {database.cpu} CPU, {database.memory} MB
         </div>
-        <div className="flex items-center text-gray-600">
+        <div className="flex items-center text-gray-600 dark:text-gray-400">
           <CircleStackIcon className="w-4 h-4 mr-2" />
           {database.storage} GB Storage
         </div>

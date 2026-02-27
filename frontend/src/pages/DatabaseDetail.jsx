@@ -125,7 +125,7 @@ const DatabaseDetail = () => {
           <div className="flex items-center space-x-3">
             <div className="text-3xl">{getEngineIcon(database.engine)}</div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{database.name}</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{database.name}</h1>
               <p className="text-gray-600 capitalize">
                 {database.engine} {database.version}
               </p>
@@ -154,7 +154,7 @@ const DatabaseDetail = () => {
       </div>
 
       {/* Tab Navigation */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-gray-200 dark:border-gray-700">
         <nav className="-mb-px flex space-x-8">
           {[
             { id: 'overview', name: 'Overview', icon: ChartBarIcon },
@@ -242,7 +242,7 @@ const DatabaseDetail = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <h3 className="text-sm font-medium text-gray-700 mb-2">Replicas</h3>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {database.k8sStatus.readyReplicas || 0} / {database.k8sStatus.replicas || 0}
               </p>
             </div>
