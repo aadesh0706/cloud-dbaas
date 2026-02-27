@@ -22,7 +22,7 @@ const DatabaseStatusChart = ({ data }) => {
       return (
         <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
           <p className="font-medium capitalize">{data.name}</p>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             {data.value} databases ({data.percentage}%)
           </p>
         </div>

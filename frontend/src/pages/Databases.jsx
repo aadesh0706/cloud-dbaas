@@ -11,12 +11,15 @@ import { Menu } from '@headlessui/react'
 import { databasesAPI } from '../services/api'
 import LoadingSpinner from '../components/LoadingSpinner'
 import DatabaseCard from '../components/DatabaseCard'
+import { DatabaseCardSkeleton, Skeleton } from '../components/Skeleton'
+import EmptyState from '../components/EmptyState'
+import { useDebouncedSearch } from '../hooks/useDebounce'
 import clsx from 'clsx'
 
 const Databases = () => {
-  const [searchTerm, setSearchTerm] = useState('')
   const [filterEngine, setFilterEngine] = useState('all')
   const [filterStatus, setFilterStatus] = useState('all')
+  const { searchTerm, setSearchTerm, debouncedTerm } = useDebouncedSearch('', 300)
 
   const { data: response, isLoading, refetch } = useQuery(
     'databases',
@@ -27,8 +30,8 @@ const Databases = () => {
 
   // Filter databases
   const filteredDatabases = databases.filter(db => {
-    const matchesSearch = db.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         db.engine.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = db.name.toLowerCase().includes(debouncedTerm.toLowerCase()) ||
+                         db.engine.toLowerCase().includes(debouncedTerm.toLowerCase())
     const matchesEngine = filterEngine === 'all' || db.engine === filterEngine
     const matchesStatus = filterStatus === 'all' || db.status === filterStatus
     
@@ -40,8 +43,26 @@ const Databases = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <LoadingSpinner size="lg" />
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <Skeleton variant="title" className="w-32 mb-2" />
+            <Skeleton variant="text" className="w-48" />
+          </div>
+          <Skeleton variant="button" className="w-40" />
+        </div>
+        <div className="card p-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Skeleton variant="input" className="flex-1" />
+            <Skeleton variant="input" className="w-full sm:w-32" />
+            <Skeleton variant="input" className="w-full sm:w-32" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <DatabaseCardSkeleton key={i} />
+          ))}
+        </div>
       </div>
     )
   }
@@ -51,8 +72,8 @@ const Databases = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Databases</h1>
-          <p className="text-gray-600">Manage your database instances</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Databases</h1>
+          <p className="text-gray-600 dark:text-gray-400">Manage your database instances</p>
         </div>
         <Link
           to="/databases/new"
@@ -108,23 +129,16 @@ const Databases = () => {
 
       {/* Databases Grid */}
       {filteredDatabases.length === 0 ? (
-        <div className="text-center py-12">
-          <CircleStackIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {databases.length === 0 ? 'No databases yet' : 'No databases match your filters'}
-          </h3>
-          <p className="text-gray-600 mb-6">
-            {databases.length === 0 
-              ? 'Create your first database to get started'
-              : 'Try adjusting your search or filter criteria'
-            }
-          </p>
-          {databases.length === 0 && (
-            <Link to="/databases/new" className="btn-primary px-6 py-3">
-              Create Database
-            </Link>
-          )}
-        </div>
+        <EmptyState
+          icon={CircleStackIcon}
+          title={databases.length === 0 ? 'No databases yet' : 'No databases match your filters'}
+          description={databases.length === 0 
+            ? 'Create your first database to get started'
+            : 'Try adjusting your search or filter criteria'
+          }
+          actionLabel={databases.length === 0 ? 'Create Database' : undefined}
+          actionHref={databases.length === 0 ? '/databases/new' : undefined}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredDatabases.map((database) => (

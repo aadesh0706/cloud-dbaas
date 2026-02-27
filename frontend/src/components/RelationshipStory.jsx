@@ -58,7 +58,7 @@ const RelationshipStory = ({ databaseId }) => {
       <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
         <div className="flex items-center justify-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-3 text-gray-600">Analyzing database relationships...</span>
+          <span className="ml-3 text-gray-600 dark:text-gray-400">Analyzing database relationships...</span>
         </div>
       </div>
     );
@@ -78,7 +78,7 @@ const RelationshipStory = ({ databaseId }) => {
   if (!storyData || !storyData.success) {
     return (
       <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <div className="flex items-center text-gray-600">
+        <div className="flex items-center text-gray-600 dark:text-gray-400">
           <InformationCircleIcon className="w-6 h-6 mr-2" />
           <span>Unable to analyze relationships for this database.</span>
         </div>
@@ -91,7 +91,7 @@ const RelationshipStory = ({ databaseId }) => {
       {/* Header */}
       <div className="flex items-center mb-4">
         <BookOpenIcon className="w-6 h-6 text-blue-600 mr-2" />
-        <h3 className="text-lg font-semibold text-gray-900">Database Relationship Story</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Database Relationship Story</h3>
         <SparklesIcon className="w-5 h-5 text-yellow-500 ml-2" />
       </div>
 
@@ -173,7 +173,7 @@ const RelationshipStory = ({ databaseId }) => {
             </summary>
             <div className="mt-4 overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-50 dark:bg-gray-800">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       From Table
@@ -197,20 +197,20 @@ const RelationshipStory = ({ databaseId }) => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {storyData.relationships.map((rel, index) => (
-                    <tr key={index} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                    <tr key={index} className="hover:bg-gray-50 dark:bg-gray-800">
+                      <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
                         {rel.fromTable}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
+                      <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                         {rel.fromColumn}
                       </td>
                       <td className="px-4 py-3 text-center text-gray-400">
                         →
                       </td>
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                      <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
                         {rel.toTable}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
+                      <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                         {rel.toColumn}
                       </td>
                       <td className="px-4 py-3 text-sm">
