@@ -132,7 +132,7 @@ What would you like to do today?`,
           {!isUser && (
             <div className="flex items-center mb-2">
               <SparklesIcon className="h-4 w-4 text-blue-500 mr-1" />
-              <span className="text-xs font-medium text-gray-600">AI Assistant</span>
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">AI Assistant</span>
             </div>
           )}
           
@@ -147,7 +147,7 @@ What would you like to do today?`,
                 <CircleStackIcon className="h-4 w-4 text-green-600 mr-1" />
                 <span className="text-sm font-medium text-green-800">Database Created</span>
               </div>
-              <div className="text-xs space-y-1 text-gray-700">
+              <div className="text-xs space-y-1 text-gray-700 dark:text-gray-300">
                 <div><strong>Name:</strong> {message.data.name}</div>
                 <div><strong>Engine:</strong> {message.data.engine} {message.data.version}</div>
                 <div><strong>ID:</strong> {message.data.id}</div>
@@ -193,7 +193,7 @@ What would you like to do today?`,
                 <ChartBarIcon className="h-4 w-4 text-yellow-600 mr-1" />
                 <span className="text-sm font-medium text-yellow-800">Next Steps</span>
               </div>
-              <ul className="text-xs space-y-1 text-gray-700">
+              <ul className="text-xs space-y-1 text-gray-700 dark:text-gray-300">
                 {message.nextSteps.map((step, idx) => (
                   <li key={idx} className="flex items-start">
                     <span className="mr-2">•</span>
@@ -228,11 +228,11 @@ What would you like to do today?`,
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center">
             <SparklesIcon className="h-6 w-6 text-blue-500 mr-2" />
-            <h2 className="text-lg font-semibold text-gray-900">AI Database Assistant</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">AI Database Assistant</h2>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 hover:text-gray-600 dark:text-gray-400"
           >
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -248,7 +248,7 @@ What would you like to do today?`,
               <div className="bg-gray-100 px-4 py-2 rounded-lg border">
                 <div className="flex items-center">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500 mr-2"></div>
-                  <span className="text-sm text-gray-600">AI is thinking...</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">AI is thinking...</span>
                 </div>
               </div>
             </div>

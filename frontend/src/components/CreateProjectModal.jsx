@@ -74,8 +74,8 @@ const CreateProjectModal = ({ isOpen, onClose, onSuccess }) => {
       <div className="fixed inset-0 overflow-y-auto">
         <div className="flex min-h-full items-center justify-center p-4">
           <Dialog.Panel className="mx-auto max-w-md w-full bg-white rounded-lg shadow-xl">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <Dialog.Title className="text-lg font-semibold text-gray-900">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <Dialog.Title className="text-lg font-semibold text-gray-900 dark:text-white">
                 Create New Project
               </Dialog.Title>
               <button

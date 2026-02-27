@@ -49,39 +49,39 @@ const PerformanceAnalysis = () => {
 
   const fetchDatabases = async () => {
     try {
-      console.log('Fetching databases...');
+      // Fetching databases
       const response = await api.get('/databases');
-      console.log('Databases response:', response);
+      // Databases response received
       const databases = response.databases || [];
-      console.log('Parsed databases:', databases);
+      // Parsed databases
       setDatabases(databases);
       if (databases.length > 0) {
         setSelectedDatabase(databases[0]);
-        console.log('Selected database:', databases[0]);
+        // Selected database
         fetchPerformanceData(databases[0].id);
       }
     } catch (error) {
-      console.error('Error fetching databases:', error);
+      // Error fetching databases
       setError(`Failed to fetch databases: ${error.message}`);
     }
   };
 
   const fetchPerformanceData = async (databaseId) => {
     try {
-      console.log('Fetching performance data for database:', databaseId);
+      // Fetching performance data
       setLoading(true);
       const [performanceResponse, comparisonResponse] = await Promise.all([
         api.get(`/performance/databases/${databaseId}/performance`),
         api.get(`/performance/databases/${databaseId}/comparison`)
       ]);
       
-      console.log('Performance response:', performanceResponse);
-      console.log('Comparison response:', comparisonResponse);
+      // Performance response received
+      // Comparison response received
       
       setBenchmarkResults(performanceResponse);
       setComparisonData(comparisonResponse);
     } catch (error) {
-      console.error('Error fetching performance data:', error);
+      // Error fetching performance data
       setError(`Failed to fetch performance data: ${error.message}`);
     } finally {
       setLoading(false);
@@ -93,7 +93,7 @@ const PerformanceAnalysis = () => {
       const response = await api.get('/performance/academic-report');
       setAcademicReport(response);
     } catch (error) {
-      console.error('Error fetching academic report:', error);
+      // Error fetching academic report
     }
   };
 
@@ -105,7 +105,7 @@ const PerformanceAnalysis = () => {
       const response = await api.post(`/performance/databases/${selectedDatabase.id}/benchmark`);
       setBenchmarkResults(response);
     } catch (error) {
-      console.error('Error running benchmark:', error);
+      // Error running benchmark
       setError(`Failed to run benchmark: ${error.message}`);
     } finally {
       setBenchmarkRunning(false);
@@ -113,9 +113,9 @@ const PerformanceAnalysis = () => {
   };
 
   const toggleLiveMetrics = () => {
-    console.log('🔥 Toggle Live Metrics clicked. Current streaming:', streamingActive);
+    // Toggle live metrics clicked
     if (streamingActive) {
-      console.log('🔥 Stopping streaming...');
+      // Stopping streaming
       setStreamingActive(false);
       setLiveMetrics(null);
       
@@ -131,7 +131,7 @@ const PerformanceAnalysis = () => {
         pollingIntervalRef.current = null;
       }
     } else {
-      console.log('🔥 Starting streaming...');
+      // Starting streaming
       setStreamingActive(true);
       startMetricsStream();
     }
@@ -143,7 +143,7 @@ const PerformanceAnalysis = () => {
       clearInterval(pollingIntervalRef.current);
     }
 
-    console.log('📡 Starting polling fallback...');
+    // Starting polling fallback
     
     const pollMetrics = async () => {
       try {
@@ -157,8 +157,8 @@ const PerformanceAnalysis = () => {
 
         if (response.ok) {
           const data = await response.json();
-          console.log('📡 Polling data received:', data);
-          console.log('📡 Polling metrics - CPU:', data.metrics?.cpu, '%, Memory:', data.metrics?.memory, '%, Connections:', data.metrics?.connections);
+          // Polling data received
+          // Polling metrics logged
           
           // Convert polling data to streaming format for consistency
           const streamingFormat = {
@@ -169,14 +169,14 @@ const PerformanceAnalysis = () => {
             status: data.status
           };
           
-          console.log('📡 Converted streaming format:', streamingFormat);
+          // Converted streaming format
           setLiveMetrics(streamingFormat);
           setStreamingActive(true);
         } else {
-          console.error('📡 Polling failed:', response.status);
+          // Polling failed
         }
       } catch (error) {
-        console.error('📡 Polling error:', error);
+        // Polling error
         setStreamingActive(false);
       }
     };
@@ -187,15 +187,15 @@ const PerformanceAnalysis = () => {
   };
 
   const startMetricsStream = () => {
-    console.log('🔥 startMetricsStream called');
+    // startMetricsStream called
     if (!selectedDatabase) {
-      console.log('🔥 No selected database');
+      // No selected database
       return;
     }
 
     const token = localStorage.getItem('token');
     const streamUrl = `http://localhost:5000/api/performance/databases/${selectedDatabase.id}/performance/stream?token=${encodeURIComponent(token)}`;
-    console.log('🔥 Stream URL:', streamUrl);
+    // Stream URL logged
     
     // Close existing connection if any
     if (eventSourceRef.current) {
@@ -207,41 +207,41 @@ const PerformanceAnalysis = () => {
     
     eventSourceRef.current.onmessage = (event) => {
       try {
-        console.log('📡 Received streaming data:', event.data);
+        // Received streaming data
         const data = JSON.parse(event.data);
-        console.log('📡 Parsed data:', data);
+        // Parsed data
         
         // Handle different data formats
         if (data.type === 'connected') {
-          console.log('📡 Stream connected:', data.message);
+          // Stream connected
           setStreamingActive(true);
           return;
         }
         
         if (data.type === 'metrics' && data.metrics) {
-          console.log('📡 Metrics received - CPU:', data.metrics.cpu, '%, Memory:', data.metrics.memory, '%, Connections:', data.metrics.connections);
-          console.log('📡 Full metrics object:', data.metrics);
+          // Metrics received logged
+          // Full metrics object logged
           setLiveMetrics(data);
           setStreamingActive(true);
         } else {
           // Legacy format support
-          console.log('📡 Legacy format - CPU:', data.metrics?.resourceUtilization?.cpu);
-          console.log('📡 Full legacy data:', data);
+          // Legacy format logged
+          // Full legacy data logged
           setLiveMetrics(data);
           setStreamingActive(true);
         }
       } catch (error) {
-        console.error('📡 Error parsing streaming data:', error);
+        // Error parsing streaming data
       }
     };
 
     eventSourceRef.current.onerror = (error) => {
-      console.log('📡 EventSource error:', error);
-      console.log('📡 EventSource readyState:', eventSourceRef.current?.readyState);
+      // EventSource error logged
+      // EventSource readyState logged
       
       // Try fallback to polling
       setTimeout(() => {
-        console.log('📡 Attempting fallback to polling...');
+        // Attempting fallback to polling
         startPollingFallback();
       }, 1000);
       
@@ -253,7 +253,7 @@ const PerformanceAnalysis = () => {
     };
 
     eventSourceRef.current.onopen = (event) => {
-      console.log('📡 EventSource connection opened');
+      // EventSource connection opened
       setStreamingActive(true);
     };
   };
@@ -284,7 +284,7 @@ const PerformanceAnalysis = () => {
         window.URL.revokeObjectURL(url);
       }
     } catch (error) {
-      console.error('Error exporting performance data:', error);
+      // Error exporting performance data
     }
   };
 
@@ -311,7 +311,7 @@ const PerformanceAnalysis = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Performance Analysis & Benchmarking</h1>
-          <p className="text-gray-600">Compare your Cloud DBaaS performance with industry standards</p>
+          <p className="text-gray-600 dark:text-gray-400">Compare your Cloud DBaaS performance with industry standards</p>
         </div>
 
         {error && (
@@ -324,7 +324,7 @@ const PerformanceAnalysis = () => {
         )}
 
         {/* Database Selection */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div className="bg-white rounded-lg shadow-sm dark:shadow-gray-700/50 p-6 mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div>
@@ -351,7 +351,7 @@ const PerformanceAnalysis = () => {
               </div>
               
               {selectedDatabase && (
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600 dark:text-gray-400">
                   <p><strong>Engine:</strong> {selectedDatabase.engine}</p>
                   <p><strong>Status:</strong> {selectedDatabase.status}</p>
                 </div>
@@ -385,15 +385,15 @@ const PerformanceAnalysis = () => {
 
         {/* Live Metrics */}
         {streamingActive && liveMetrics && (
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <div className="bg-white rounded-lg shadow-sm dark:shadow-gray-700/50 p-6 mb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Live Performance Metrics</h3>
             <div className="grid grid-cols-4 gap-4">
               <div className="bg-blue-50 p-4 rounded-lg">
                 <div className="flex items-center">
                   <CpuChipIcon className="w-8 h-8 text-blue-600 mr-3" />
                   <div>
-                    <p className="text-sm font-medium text-gray-600">CPU Usage</p>
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">CPU Usage</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
                       {(liveMetrics.metrics?.cpu || 0)}%
                     </p>
                   </div>
@@ -404,8 +404,8 @@ const PerformanceAnalysis = () => {
                 <div className="flex items-center">
                   <ServerIcon className="w-8 h-8 text-green-600 mr-3" />
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Memory Usage</p>
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Memory Usage</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
                       {(liveMetrics.metrics?.memory || 0)}%
                     </p>
                   </div>
@@ -416,8 +416,8 @@ const PerformanceAnalysis = () => {
                 <div className="flex items-center">
                   <ClockIcon className="w-8 h-8 text-yellow-600 mr-3" />
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Active Connections</p>
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Connections</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
                       {(liveMetrics.metrics?.connections || 0)}
                     </p>
                   </div>
@@ -428,8 +428,8 @@ const PerformanceAnalysis = () => {
                 <div className="flex items-center">
                   <ChartBarIcon className="w-8 h-8 text-purple-600 mr-3" />
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Active Queries</p>
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Queries</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
                       {(liveMetrics.metrics?.activeQueries || 0)}
                     </p>
                   </div>
@@ -442,7 +442,7 @@ const PerformanceAnalysis = () => {
         {/* Performance Results */}
         {benchmarkResults && (
           <>
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div className="bg-white rounded-lg shadow-sm dark:shadow-gray-700/50 p-6 mb-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Performance Testing - {selectedDatabase.name}
               </h3>
@@ -549,7 +549,7 @@ const PerformanceAnalysis = () => {
 
         {/* Comparison Section */}
         {comparisonData && (
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <div className="bg-white rounded-lg shadow-sm dark:shadow-gray-700/50 p-6 mb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               Comparison with Existing DBaaS Systems
             </h3>
@@ -558,19 +558,19 @@ const PerformanceAnalysis = () => {
                 <div className="text-3xl font-bold text-green-600 mb-2">
                   {comparisonData.comparison?.advantages?.[0]?.value || 'N/A'}
                 </div>
-                <p className="text-sm text-gray-600">Response Time Advantage</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Response Time Advantage</p>
                 <p className="text-xs text-gray-500">Systems outperformed</p>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-blue-600 mb-2">100%</div>
-                <p className="text-sm text-gray-600">Cost Advantage</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Cost Advantage</p>
                 <p className="text-xs text-gray-500">Open source benefit</p>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-purple-600 mb-2">
                   {comparisonData.comparison?.ranking || 'N/A'}
                 </div>
-                <p className="text-sm text-gray-600">Overall Ranking</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Overall Ranking</p>
                 <p className="text-xs text-gray-500">Among tested systems</p>
               </div>
             </div>
@@ -579,7 +579,7 @@ const PerformanceAnalysis = () => {
 
         {/* Academic Analysis */}
         {academicReport && (
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="bg-white rounded-lg shadow-sm dark:shadow-gray-700/50 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Academic Analysis</h3>
             <div className="grid grid-cols-2 gap-8">
               {/* Grafana Integration */}

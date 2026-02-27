@@ -62,8 +62,8 @@ const Monitoring = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Monitoring</h1>
-        <p className="text-gray-600">Real-time monitoring and alerts for your databases</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Monitoring</h1>
+        <p className="text-gray-600 dark:text-gray-400">Real-time monitoring and alerts for your databases</p>
       </div>
 
       {/* Database Selection */}
@@ -150,7 +150,7 @@ const Monitoring = () => {
           <div className="card p-6 text-center">
             <ExclamationTriangleIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
             <h3 className="text-lg font-medium text-gray-900 mb-1">No Active Alerts</h3>
-            <p className="text-gray-600">All systems are running normally</p>
+            <p className="text-gray-600 dark:text-gray-400">All systems are running normally</p>
           </div>
         ) : (
           <div className="space-y-3">
