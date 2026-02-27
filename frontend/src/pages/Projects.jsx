@@ -13,6 +13,7 @@ import { Menu } from '@headlessui/react'
 import { projectsAPI } from '../services/api'
 import LoadingSpinner from '../components/LoadingSpinner'
 import CreateProjectModal from '../components/CreateProjectModal'
+import { DatabaseCardSkeleton, Skeleton } from '../components/Skeleton'
 import toast from 'react-hot-toast'
 import clsx from 'clsx'
 
@@ -55,8 +56,22 @@ const Projects = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <LoadingSpinner size="lg" />
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <Skeleton variant="title" className="w-24 mb-2" />
+            <Skeleton variant="text" className="w-56" />
+          </div>
+          <Skeleton variant="button" className="w-36" />
+        </div>
+        <div className="card p-4">
+          <Skeleton variant="input" className="w-full" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <DatabaseCardSkeleton key={i} />
+          ))}
+        </div>
       </div>
     )
   }
@@ -66,8 +81,8 @@ const Projects = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Projects</h1>
-          <p className="text-gray-600">Organize your databases into projects</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Projects</h1>
+          <p className="text-gray-600 dark:text-gray-400">Organize your databases into projects</p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
@@ -136,7 +151,7 @@ const Projects = () => {
                 </div>
 
                 <Menu as="div" className="relative">
-                  <Menu.Button className="p-1 text-gray-400 hover:text-gray-600">
+                  <Menu.Button className="p-1 text-gray-400 hover:text-gray-600 dark:text-gray-400">
                     <EllipsisVerticalIcon className="w-5 h-5" />
                   </Menu.Button>
                   <Menu.Items className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
@@ -192,13 +207,13 @@ const Projects = () => {
               {/* Stats */}
               <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-100">
                 <div className="text-center">
-                  <div className="text-lg font-semibold text-gray-900">
+                  <div className="text-lg font-semibold text-gray-900 dark:text-white">
                     {project.databaseCount}
                   </div>
                   <div className="text-xs text-gray-500">Databases</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-semibold text-gray-900">
+                  <div className="text-lg font-semibold text-gray-900 dark:text-white">
                     {project.lastDatabaseCreated 
                       ? new Date(project.lastDatabaseCreated).toLocaleDateString()
                       : 'Never'

@@ -56,9 +56,9 @@ const ProjectDetail = () => {
             <ArrowLeftIcon className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{project.name}</h1>
             {project.description && (
-              <p className="text-gray-600">{project.description}</p>
+              <p className="text-gray-600 dark:text-gray-400">{project.description}</p>
             )}
           </div>
         </div>
@@ -91,20 +91,20 @@ const ProjectDetail = () => {
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="card p-6 text-center">
-            <div className="text-2xl font-bold text-gray-900">{stats.totalDatabases}</div>
-            <div className="text-sm text-gray-600">Total Databases</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalDatabases}</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Total Databases</div>
           </div>
           <div className="card p-6 text-center">
             <div className="text-2xl font-bold text-success-600">{stats.runningDatabases}</div>
-            <div className="text-sm text-gray-600">Running</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Running</div>
           </div>
           <div className="card p-6 text-center">
             <div className="text-2xl font-bold text-primary-600">{stats.totalStorage.toFixed(1)} GB</div>
-            <div className="text-sm text-gray-600">Total Storage</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Total Storage</div>
           </div>
           <div className="card p-6 text-center">
             <div className="text-2xl font-bold text-secondary-600">{stats.totalCpu.toFixed(1)}</div>
-            <div className="text-sm text-gray-600">CPU Cores</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">CPU Cores</div>
           </div>
         </div>
       )}
@@ -116,7 +116,7 @@ const ProjectDetail = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <h3 className="text-sm font-medium text-gray-700 mb-2">CPU Usage</h3>
-              <div className="text-xl font-bold text-gray-900">
+              <div className="text-xl font-bold text-gray-900 dark:text-white">
                 {stats.totalCpu.toFixed(1)} cores
               </div>
               <div className="text-sm text-gray-500">
@@ -125,7 +125,7 @@ const ProjectDetail = () => {
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-700 mb-2">Memory Usage</h3>
-              <div className="text-xl font-bold text-gray-900">
+              <div className="text-xl font-bold text-gray-900 dark:text-white">
                 {(stats.totalMemory / 1024).toFixed(1)} GB
               </div>
               <div className="text-sm text-gray-500">
@@ -134,7 +134,7 @@ const ProjectDetail = () => {
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-700 mb-2">Storage Usage</h3>
-              <div className="text-xl font-bold text-gray-900">
+              <div className="text-xl font-bold text-gray-900 dark:text-white">
                 {stats.totalStorage.toFixed(1)} GB
               </div>
               <div className="text-sm text-gray-500">
@@ -152,21 +152,21 @@ const ProjectDetail = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center">
               <div className="text-xl font-bold text-success-600">{stats.runningDatabases}</div>
-              <div className="text-sm text-gray-600">Running</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Running</div>
             </div>
             <div className="text-center">
               <div className="text-xl font-bold text-warning-600">{stats.creatingDatabases}</div>
-              <div className="text-sm text-gray-600">Creating</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Creating</div>
             </div>
             <div className="text-center">
               <div className="text-xl font-bold text-error-600">{stats.errorDatabases}</div>
-              <div className="text-sm text-gray-600">Error</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Error</div>
             </div>
             <div className="text-center">
-              <div className="text-xl font-bold text-gray-600">
+              <div className="text-xl font-bold text-gray-600 dark:text-gray-400">
                 {stats.totalDatabases - stats.runningDatabases - stats.creatingDatabases - stats.errorDatabases}
               </div>
-              <div className="text-sm text-gray-600">Other</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Other</div>
             </div>
           </div>
         </div>
@@ -175,7 +175,7 @@ const ProjectDetail = () => {
       {/* Databases */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Databases</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Databases</h2>
           <Link
             to="/databases/new"
             state={{ projectId: project.id }}
@@ -214,31 +214,31 @@ const ProjectDetail = () => {
       </div>
 
       {/* Project Info */}
-      <div className="card p-6 bg-gray-50">
+      <div className="card p-6 bg-gray-50 dark:bg-gray-900">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Project Information</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <div>
-            <span className="font-medium text-gray-700">Created:</span>
-            <span className="ml-2 text-gray-900">
+            <span className="font-medium text-gray-700 dark:text-gray-300">Created:</span>
+            <span className="ml-2 text-gray-900 dark:text-white">
               {new Date(project.createdAt).toLocaleDateString()}
             </span>
           </div>
           {project.updatedAt && (
             <div>
-              <span className="font-medium text-gray-700">Last Updated:</span>
-              <span className="ml-2 text-gray-900">
+              <span className="font-medium text-gray-700 dark:text-gray-300">Last Updated:</span>
+              <span className="ml-2 text-gray-900 dark:text-white">
                 {new Date(project.updatedAt).toLocaleDateString()}
               </span>
             </div>
           )}
           <div>
-            <span className="font-medium text-gray-700">Database Count:</span>
-            <span className="ml-2 text-gray-900">{project.databaseCount}</span>
+            <span className="font-medium text-gray-700 dark:text-gray-300">Database Count:</span>
+            <span className="ml-2 text-gray-900 dark:text-white">{project.databaseCount}</span>
           </div>
           {project.lastDatabaseCreated && (
             <div>
-              <span className="font-medium text-gray-700">Last Database:</span>
-              <span className="ml-2 text-gray-900">
+              <span className="font-medium text-gray-700 dark:text-gray-300">Last Database:</span>
+              <span className="ml-2 text-gray-900 dark:text-white">
                 {new Date(project.lastDatabaseCreated).toLocaleDateString()}
               </span>
             </div>

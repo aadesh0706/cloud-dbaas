@@ -139,11 +139,11 @@ const EmailVerification = ({ email, onVerificationSuccess, onBackToRegister }) =
             <EnvelopeIcon className="h-8 w-8 text-primary-600" />
           </div>
           <h1 className="text-4xl font-bold text-gradient mb-2">Cloud DBaaS</h1>
-          <h2 className="text-2xl font-semibold text-gray-900">Verify your email</h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Verify your email</h2>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
             We sent a verification code to
           </p>
-          <p className="text-sm font-medium text-gray-900">{email}</p>
+          <p className="text-sm font-medium text-gray-900 dark:text-white">{email}</p>
         </div>
 
         <div className="card p-8">
@@ -186,7 +186,7 @@ const EmailVerification = ({ email, onVerificationSuccess, onBackToRegister }) =
 
             {/* Resend Section */}
             <div className="text-center space-y-3">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 Didn't receive the code?
               </p>
               
@@ -214,10 +214,10 @@ const EmailVerification = ({ email, onVerificationSuccess, onBackToRegister }) =
             </div>
 
             {/* Back to Register Link */}
-            <div className="text-center pt-4 border-t border-gray-200">
+            <div className="text-center pt-4 border-t border-gray-200 dark:border-gray-700">
               <button
                 onClick={onBackToRegister}
-                className="text-sm text-gray-500 hover:text-gray-700"
+                className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-300"
               >
                 ← Back to registration
               </button>

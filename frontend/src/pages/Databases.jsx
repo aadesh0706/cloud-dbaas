@@ -11,6 +11,7 @@ import { Menu } from '@headlessui/react'
 import { databasesAPI } from '../services/api'
 import LoadingSpinner from '../components/LoadingSpinner'
 import DatabaseCard from '../components/DatabaseCard'
+import { DatabaseCardSkeleton, Skeleton } from '../components/Skeleton'
 import clsx from 'clsx'
 
 const Databases = () => {
@@ -40,8 +41,26 @@ const Databases = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <LoadingSpinner size="lg" />
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <Skeleton variant="title" className="w-32 mb-2" />
+            <Skeleton variant="text" className="w-48" />
+          </div>
+          <Skeleton variant="button" className="w-40" />
+        </div>
+        <div className="card p-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Skeleton variant="input" className="flex-1" />
+            <Skeleton variant="input" className="w-full sm:w-32" />
+            <Skeleton variant="input" className="w-full sm:w-32" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <DatabaseCardSkeleton key={i} />
+          ))}
+        </div>
       </div>
     )
   }
@@ -51,8 +70,8 @@ const Databases = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Databases</h1>
-          <p className="text-gray-600">Manage your database instances</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Databases</h1>
+          <p className="text-gray-600 dark:text-gray-400">Manage your database instances</p>
         </div>
         <Link
           to="/databases/new"

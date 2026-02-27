@@ -107,7 +107,7 @@ const DatabaseSchemaExplorer = ({ database }) => {
       <div className="text-center py-12">
         <DocumentTextIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
         <h3 className="text-lg font-medium text-gray-900 mb-2">No Schema Available</h3>
-        <p className="text-gray-600">Unable to load database schema information.</p>
+        <p className="text-gray-600 dark:text-gray-400">Unable to load database schema information.</p>
       </div>
     )
   }
@@ -121,7 +121,7 @@ const DatabaseSchemaExplorer = ({ database }) => {
             <TableCellsIcon className="w-5 h-5 mr-2 text-primary-600" />
             Database Schema
           </h3>
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-gray-600 dark:text-gray-400">
             {schema.totalTables} {schema.engine === 'mongodb' ? 'collections' : 'tables'}
           </div>
         </div>
@@ -131,7 +131,7 @@ const DatabaseSchemaExplorer = ({ database }) => {
           {schema.tables.map((table) => (
             <div key={table.name} className="border border-gray-100 rounded-lg">
               <div
-                className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50"
+                className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 dark:bg-gray-800"
                 onClick={() => setExpandedTable(expandedTable === table.name ? null : table.name)}
               >
                 <div className="flex items-center">
@@ -141,7 +141,7 @@ const DatabaseSchemaExplorer = ({ database }) => {
                     <ChevronRightIcon className="w-4 h-4 text-gray-400 mr-2" />
                   )}
                   <TableCellsIcon className="w-4 h-4 text-primary-600 mr-2" />
-                  <span className="font-medium text-gray-900">{table.name}</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{table.name}</span>
                   {table.type && (
                     <span className="ml-2 px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">
                       {table.type}
@@ -167,7 +167,7 @@ const DatabaseSchemaExplorer = ({ database }) => {
               </div>
 
               {expandedTable === table.name && (
-                <div className="border-t border-gray-100 p-4 bg-gray-50">
+                <div className="border-t border-gray-100 p-4 bg-gray-50 dark:bg-gray-800">
                   <div className="flex space-x-4 text-sm">
                     <button
                       onClick={() => handleViewData(table.name)}
@@ -232,14 +232,14 @@ const DatabaseSchemaExplorer = ({ database }) => {
                 <div className="overflow-x-auto">
                   <table className="min-w-full table-auto">
                     <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="text-left py-2 px-3 text-sm font-medium text-gray-700">Name</th>
-                        <th className="text-left py-2 px-3 text-sm font-medium text-gray-700">Type</th>
-                        <th className="text-left py-2 px-3 text-sm font-medium text-gray-700">Nullable</th>
+                      <tr className="border-b border-gray-200 dark:border-gray-700">
+                        <th className="text-left py-2 px-3 text-sm font-medium text-gray-700 dark:text-gray-300">Name</th>
+                        <th className="text-left py-2 px-3 text-sm font-medium text-gray-700 dark:text-gray-300">Type</th>
+                        <th className="text-left py-2 px-3 text-sm font-medium text-gray-700 dark:text-gray-300">Nullable</th>
                         {tableDetails.engine !== 'mongodb' && (
                           <>
-                            <th className="text-left py-2 px-3 text-sm font-medium text-gray-700">Default</th>
-                            <th className="text-left py-2 px-3 text-sm font-medium text-gray-700">Key</th>
+                            <th className="text-left py-2 px-3 text-sm font-medium text-gray-700 dark:text-gray-300">Default</th>
+                            <th className="text-left py-2 px-3 text-sm font-medium text-gray-700 dark:text-gray-300">Key</th>
                           </>
                         )}
                       </tr>
@@ -252,7 +252,7 @@ const DatabaseSchemaExplorer = ({ database }) => {
                           <td className="py-2 px-3 text-sm">{column.nullable}</td>
                           {tableDetails.engine !== 'mongodb' && (
                             <>
-                              <td className="py-2 px-3 text-sm font-mono text-gray-600">
+                              <td className="py-2 px-3 text-sm font-mono text-gray-600 dark:text-gray-400">
                                 {column.default_value || '-'}
                               </td>
                               <td className="py-2 px-3 text-sm">
@@ -284,7 +284,7 @@ const DatabaseSchemaExplorer = ({ database }) => {
                       <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded">
                         <span className="font-mono text-sm">{index.name}</span>
                         {index.column_name && (
-                          <span className="text-sm text-gray-600">on {index.column_name}</span>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">on {index.column_name}</span>
                         )}
                       </div>
                     ))}
@@ -304,7 +304,7 @@ const DatabaseSchemaExplorer = ({ database }) => {
               <TableCellsIcon className="w-5 h-5 mr-2 text-primary-600" />
               {collectionData.tableName} Data
             </h3>
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
               Showing {collectionData.data.length} of {collectionData.total} records
             </div>
           </div>
@@ -314,7 +314,7 @@ const DatabaseSchemaExplorer = ({ database }) => {
               <thead className="bg-gray-50 sticky top-0">
                 <tr>
                   {collectionData.columns.map((column, index) => (
-                    <th key={index} className="text-left py-2 px-3 text-sm font-medium text-gray-700 border-r border-gray-200">
+                    <th key={index} className="text-left py-2 px-3 text-sm font-medium text-gray-700 border-r border-gray-200 dark:border-gray-700">
                       {column.name}
                       <span className="text-xs text-gray-500 ml-1">({column.type})</span>
                     </th>
@@ -323,7 +323,7 @@ const DatabaseSchemaExplorer = ({ database }) => {
               </thead>
               <tbody>
                 {collectionData.data.map((row, rowIndex) => (
-                  <tr key={rowIndex} className="border-b border-gray-100 hover:bg-gray-50">
+                  <tr key={rowIndex} className="border-b border-gray-100 hover:bg-gray-50 dark:bg-gray-800">
                     {collectionData.columns.map((column, colIndex) => (
                       <td key={colIndex} className="py-2 px-3 text-sm border-r border-gray-100">
                         <div className="max-w-xs overflow-hidden">
@@ -353,7 +353,7 @@ const DatabaseSchemaExplorer = ({ database }) => {
           <div className="mt-4 text-center">
             <button
               onClick={() => setCollectionData(null)}
-              className="text-sm text-gray-500 hover:text-gray-700"
+              className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-300"
             >
               Close Data View
             </button>
@@ -383,7 +383,7 @@ const DatabaseSchemaExplorer = ({ database }) => {
           </div>
           
           <div className="flex justify-between">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
               Only read-only queries are allowed for security.
             </div>
             <button
@@ -415,7 +415,7 @@ const DatabaseSchemaExplorer = ({ database }) => {
                 <thead className="bg-gray-50 sticky top-0">
                   <tr>
                     {queryResult.columns.map((column, index) => (
-                      <th key={index} className="text-left py-2 px-3 text-sm font-medium text-gray-700 border-r border-gray-200">
+                      <th key={index} className="text-left py-2 px-3 text-sm font-medium text-gray-700 border-r border-gray-200 dark:border-gray-700">
                         {column.name}
                       </th>
                     ))}
@@ -423,7 +423,7 @@ const DatabaseSchemaExplorer = ({ database }) => {
                 </thead>
                 <tbody>
                   {queryResult.rows.map((row, rowIndex) => (
-                    <tr key={rowIndex} className="border-b border-gray-100 hover:bg-gray-50">
+                    <tr key={rowIndex} className="border-b border-gray-100 hover:bg-gray-50 dark:bg-gray-800">
                       {queryResult.columns.map((column, colIndex) => (
                         <td key={colIndex} className="py-2 px-3 text-sm font-mono border-r border-gray-100">
                           {row[column.name] !== null && row[column.name] !== undefined 

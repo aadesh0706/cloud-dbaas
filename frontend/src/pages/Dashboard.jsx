@@ -67,8 +67,8 @@ const Dashboard = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600">Overview of your database infrastructure</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+          <p className="text-gray-600 dark:text-gray-400">Overview of your database infrastructure</p>
         </div>
         <div className="flex space-x-3">
           <Link
@@ -142,7 +142,7 @@ const Dashboard = () => {
                     {engine}
                   </span>
                 </div>
-                <span className="text-sm text-gray-600">{count} databases</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">{count} databases</span>
               </div>
             ))}
             {Object.keys(databasesByEngine).length === 0 && (
@@ -155,7 +155,7 @@ const Dashboard = () => {
       {/* Recent Databases */}
       <div className="card p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Recent Databases</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Databases</h3>
           <Link
             to="/databases"
             className="text-primary-600 hover:text-primary-700 text-sm font-medium"
@@ -175,7 +175,7 @@ const Dashboard = () => {
         ) : (
           <div className="overflow-hidden">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 dark:bg-gray-900">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Name
@@ -193,7 +193,7 @@ const Dashboard = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {databases.slice(0, 5).map((database) => (
-                  <tr key={database.id} className="hover:bg-gray-50">
+                  <tr key={database.id} className="hover:bg-gray-50 dark:bg-gray-900">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Link
                         to={`/databases/${database.id}`}
@@ -232,19 +232,19 @@ const Dashboard = () => {
               <div className="text-2xl font-bold text-primary-600">
                 {parseFloat(systemMetrics.totalCpuUsage?.value || 0).toFixed(1)}%
               </div>
-              <div className="text-sm text-gray-600">CPU Usage</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">CPU Usage</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-success-600">
                 {parseFloat(systemMetrics.totalMemoryUsage?.value || 0).toFixed(1)} GB
               </div>
-              <div className="text-sm text-gray-600">Memory Usage</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Memory Usage</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-warning-600">
                 {parseFloat(systemMetrics.totalStorageUsage?.value || 0).toFixed(1)} GB
               </div>
-              <div className="text-sm text-gray-600">Storage Usage</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Storage Usage</div>
             </div>
           </div>
         </div>
