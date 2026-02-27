@@ -13,6 +13,7 @@ import { Menu } from '@headlessui/react'
 import { projectsAPI } from '../services/api'
 import LoadingSpinner from '../components/LoadingSpinner'
 import CreateProjectModal from '../components/CreateProjectModal'
+import { DatabaseCardSkeleton, Skeleton } from '../components/Skeleton'
 import toast from 'react-hot-toast'
 import clsx from 'clsx'
 
@@ -55,8 +56,22 @@ const Projects = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <LoadingSpinner size="lg" />
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <Skeleton variant="title" className="w-24 mb-2" />
+            <Skeleton variant="text" className="w-56" />
+          </div>
+          <Skeleton variant="button" className="w-36" />
+        </div>
+        <div className="card p-4">
+          <Skeleton variant="input" className="w-full" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <DatabaseCardSkeleton key={i} />
+          ))}
+        </div>
       </div>
     )
   }
