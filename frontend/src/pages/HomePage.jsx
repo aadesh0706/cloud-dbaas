@@ -342,6 +342,49 @@ const HomePage = () => {
         </div>
       </section>
 
+      {/* Project Presentation */}
+      <section className="py-24 bg-white/5">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              Project Presentation
+            </h2>
+            <p className="text-xl text-white/70 max-w-3xl mx-auto">
+              Explore the full project story, architecture, and future roadmap in the embedded Canva deck.
+            </p>
+          </div>
+
+          <div className="relative w-full pt-[56.25%] rounded-2xl overflow-hidden border border-white/20 shadow-2xl shadow-black/30 bg-black/20">
+            <iframe
+              loading="lazy"
+              className="absolute inset-0 w-full h-full"
+              src="https://www.canva.com/design/DAHFNW_Tnc8/43sltxe84J7aQmlkblZ3fg/view?embed"
+              title="The Future of Database Management"
+              allowFullScreen
+            />
+          </div>
+
+          <div className="mt-6 flex flex-col md:flex-row items-center justify-center gap-4 text-sm">
+            <a
+              href="https://www.canva.com/design/DAHFNW_Tnc8/43sltxe84J7aQmlkblZ3fg/view?utm_content=DAHFNW_Tnc8&utm_campaign=designshare&utm_medium=embeds&utm_source=link"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-300 hover:text-blue-200 underline underline-offset-4"
+            >
+              Open presentation in Canva
+            </a>
+            <a
+              href="https://www.canva.com/design/DAHFNW_Tnc8/mq02Rjp6u95CBwuiX7l01g/view?utm_content=DAHFNW_Tnc8&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h78dfdb07c9"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-purple-300 hover:text-purple-200 underline underline-offset-4"
+            >
+              Open alternate deck
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* Testimonials */}
       <section className="py-32">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
