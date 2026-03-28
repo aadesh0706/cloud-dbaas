@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "installCommand": "cd frontend && npm install",
-  "buildCommand": "cd frontend && npm run build",
-  "outputDirectory": "frontend/dist",
+  "installCommand": "if [ -d frontend ]; then (cd frontend && npm install); else npm install; fi",
+  "buildCommand": "if [ -d frontend ]; then (cd frontend && npm run build && cp -r dist ../dist); else npm run build; fi",
+  "outputDirectory": "dist",
   "rewrites": [
     {
       "source": "/(.*)",
