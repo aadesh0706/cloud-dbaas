@@ -187,9 +187,9 @@ app.listen(PORT, async () => {
   logger.info(`🚀 DBaaS Backend Server running on port ${PORT}`);
   logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
   
-  // Temporarily disable database initialization for debugging
-  // await initDatabase();
-  logger.info('⚠️ Database initialization disabled for debugging');
+  // Run database initialization (creates tables if they don't exist)
+  await initDatabase();
+  logger.info('✅ Database schema initialized');
   
   // Initialize cleanup service
   const cleanupService = new CleanupService();
