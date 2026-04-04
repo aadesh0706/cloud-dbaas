@@ -13,6 +13,7 @@ const projectRoutes = require('./routes/projects');
 const performanceRoutes = require('./routes/performance');
 const aiAssistantRoutes = require('./routes/ai-assistant');
 const backupRoutes = require('./routes/backups');
+const demoRoutes = require('./routes/demo');
 
 const errorHandler = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
@@ -158,6 +159,7 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/performance', performanceRoutes);
 app.use('/api/ai-assistant', aiAssistantRoutes);
 app.use('/api/backups', backupRoutes);
+app.use('/api/demo', demoRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

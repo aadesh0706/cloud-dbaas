@@ -100,7 +100,7 @@ export const aiAssistantAPI = {
 // Backups API
 export const backupsAPI = {
   getAll: () => api.get('/backups'),
-  create: (databaseId) => api.post('/backups', { databaseId }),
+  create: (databaseId, backupType = 'full') => api.post('/backups', { databaseId, backupType }),
   delete: (id) => api.delete(`/backups/${id}`),
   restore: (id) => api.post(`/backups/${id}/restore`),
 }

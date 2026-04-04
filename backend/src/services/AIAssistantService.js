@@ -98,6 +98,30 @@ class AIAssistantService {
       };
     }
     
+    if (message.includes('create') && message.includes('project')) {
+      return {
+        action: 'create_project',
+        parameters: { name: `My Project ${Date.now()}` },
+        confidence: 0.85
+      };
+    }
+
+    if (message.includes('query') || message.includes('find') || message.includes('select')) {
+      return {
+        action: 'query_data',
+        parameters: {},
+        confidence: 0.75
+      };
+    }
+
+    if (message.includes('optimize') || message.includes('optimise') || message.includes('performance') || message.includes('slow')) {
+      return {
+        action: 'optimize_performance',
+        parameters: {},
+        confidence: 0.8
+      };
+    }
+
     return {
       action: 'help',
       parameters: {},
@@ -233,7 +257,7 @@ class AIAssistantService {
       const { parameters } = intent;
       
       // Get user's databases
-      const databases = await this.databaseService.getDatabases(userId);
+      const databases = await this.databaseService.getUserDatabases(userId);
       
       // Find relevant database
       const database = this.findRelevantDatabase(databases, parameters);
@@ -260,6 +284,144 @@ class AIAssistantService {
       };
     } catch (error) {
       logger.error('Schema view error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a project from AI natural language request
+   */
+  async createProjectFromRequest(intent, userId) {
+    try {
+      const { parameters } = intent;
+      const projectName = parameters.name || `AI Project ${Date.now()}`;
+      const result = await this.databaseService.pool.query(
+        `INSERT INTO projects (id, name, description, user_id, created_at)
+         VALUES ($1, $2, $3, $4, NOW()) RETURNING *`,
+        [uuidv4(), projectName, parameters.description || 'Created by AI Assistant', userId]
+      );
+      const project = result.rows[0];
+      return {
+        success: true,
+        message: `✅ Successfully created project "${project.name}"`,
+        project,
+        nextSteps: [
+          '📦 Add databases to your new project',
+          '👥 Invite team members if needed',
+          '📊 Configure monitoring and alerts'
+        ]
+      };
+    } catch (error) {
+      logger.error('Create project from AI error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Guide user to query their database data
+   */
+  async queryDatabaseData(intent, userId) {
+    try {
+      const databases = await this.databaseService.getUserDatabases(userId);
+      if (databases.length === 0) {
+        return {
+          success: false,
+          message: 'You have no databases to query. Create a database first.',
+          tip: 'Use the "Create a MySQL database" command to get started.'
+        };
+      }
+      return {
+        success: true,
+        message: '🔍 To query your database, use the Schema & Data tab in Database Details.',
+        availableDatabases: databases.map(db => ({ id: db.id, name: db.name, engine: db.engine })),
+        tip: 'Navigate to Databases → select your database → "Schema & Data" tab to run SELECT queries interactively.'
+      };
+    } catch (error) {
+      logger.error('Query data AI error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Return connection info and code examples for the user's database
+   */
+  async getDatabaseConnection(intent, userId) {
+    try {
+      const { parameters } = intent;
+      const language = parameters.language || 'nodejs';
+      const databases = await this.databaseService.getUserDatabases(userId);
+      if (databases.length === 0) {
+        return {
+          success: false,
+          message: 'No databases found. Create a database first to get connection details.'
+        };
+      }
+      const database = databases[0];
+      const connectionInfo = await this.databaseService.generateConnectionUrl(database);
+      const examples = this.generateCodeExamples(connectionInfo, database.engine);
+      return {
+        success: true,
+        message: `🔗 Here is how to connect to "${database.name}" using ${language}`,
+        database: { id: database.id, name: database.name, engine: database.engine },
+        connectionInfo,
+        codeExample: examples[language] || examples.nodejs,
+        tip: 'Use the "Get Connection" button on the Database Detail page for live credentials.'
+      };
+    } catch (error) {
+      logger.error('Get connection AI error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Return engine-specific optimization tips for user's databases
+   */
+  async optimizeDatabase(intent, userId) {
+    try {
+      const databases = await this.databaseService.getUserDatabases(userId);
+      const recommendations = {
+        mysql: [
+          'Enable query cache with query_cache_size = 64M',
+          'Add indexes on frequently queried columns',
+          'Use EXPLAIN to analyse slow queries',
+          'Consider connection pooling with a max pool size of 20'
+        ],
+        postgresql: [
+          'Run VACUUM ANALYZE periodically to update statistics',
+          'Set work_mem = 64MB for complex sort operations',
+          'Add partial indexes for filtered queries',
+          'Use pg_stat_statements to identify slow queries'
+        ],
+        mongodb: [
+          'Create compound indexes that match your query patterns',
+          'Use projection to return only necessary fields',
+          'Enable the MongoDB profiler to log slow operations',
+          'Consider read replicas for read-heavy workloads'
+        ],
+        redis: [
+          'Set appropriate maxmemory and eviction policy',
+          'Use pipelining to batch commands',
+          'Monitor key expiry and memory usage',
+          'Use Redis Cluster for horizontal scaling'
+        ]
+      };
+      return {
+        success: true,
+        message: '⚡ Here are performance optimisation recommendations for your databases:',
+        databases: databases.map(db => ({
+          id: db.id,
+          name: db.name,
+          engine: db.engine,
+          recommendations: recommendations[db.engine] || recommendations.mysql
+        })),
+        generalTips: [
+          '📊 Monitor query performance from the Performance Analysis page',
+          '🔔 Set up alerts for CPU and memory thresholds',
+          '📈 Review the Monitoring tab for real-time metrics'
+        ]
+      };
+    } catch (error) {
+      logger.error('Optimise database AI error:', error);
       throw error;
     }
   }
@@ -566,6 +728,80 @@ const result = await collection.insertOne({
 });
 console.log('Insert result:', result);`;
     }
+  }
+
+  generatePythonConnection(database, connectionInfo) {
+    if (database.engine === 'mysql') {
+      return `import mysql.connector
+
+connection = mysql.connector.connect(
+    host='${connectionInfo.host}',
+    user='${connectionInfo.username}',
+    password='${connectionInfo.password}',
+    database='${connectionInfo.database}'
+)
+print('Connected to MySQL database!')`;
+    }
+    if (database.engine === 'postgresql') {
+      return `import psycopg2
+
+connection = psycopg2.connect(
+    host='${connectionInfo.host}',
+    user='${connectionInfo.username}',
+    password='${connectionInfo.password}',
+    database='${connectionInfo.database}',
+    port=5432
+)
+print('Connected to PostgreSQL database!')`;
+    }
+    if (database.engine === 'mongodb') {
+      return `from pymongo import MongoClient
+
+client = MongoClient('${connectionInfo.connectionString}')
+db = client['${connectionInfo.database}']
+print('Connected to MongoDB database!')`;
+    }
+    return `# Connection example for ${database.engine}\n# Please refer to the documentation for your specific driver`;
+  }
+
+  generatePythonQuery(database, connectionInfo) {
+    if (database.engine === 'mysql' || database.engine === 'postgresql') {
+      return `# Query example
+cursor = connection.cursor()
+cursor.execute("SELECT * FROM users LIMIT 10")
+results = cursor.fetchall()
+print('Query results:', results)`;
+    }
+    if (database.engine === 'mongodb') {
+      return `# Query example
+collection = db['users']
+results = list(collection.find({}).limit(10))
+print('Query results:', results)`;
+    }
+    return `# Query example for ${database.engine}`;
+  }
+
+  generatePythonInsert(database, connectionInfo) {
+    if (database.engine === 'mysql' || database.engine === 'postgresql') {
+      return `# Insert example
+cursor = connection.cursor()
+cursor.execute(
+    "INSERT INTO users (username, email) VALUES (%s, %s)",
+    ('john_doe', 'john@example.com')
+)
+connection.commit()
+print('Insert successful, row id:', cursor.lastrowid)`;
+    }
+    if (database.engine === 'mongodb') {
+      return `# Insert example
+collection = db['users']
+result = collection.insert_one({
+    'username': 'john_doe',
+    'email': 'john@example.com'
+})
+print('Insert result:', result.inserted_id)`;
+    }
+    return `# Insert example for ${database.engine}`;
   }
 
   /**

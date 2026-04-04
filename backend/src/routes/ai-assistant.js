@@ -2,9 +2,13 @@ const express = require('express');
 const AIAssistantService = require('../services/AIAssistantService');
 const authenticateToken = require('../middleware/auth');
 const logger = require('../utils/logger');
+const DatabaseService = process.env.NODE_ENV === 'production'
+  ? require('../services/DatabaseService.production')
+  : require('../services/DatabaseService');
 
 const router = express.Router();
 const aiAssistant = new AIAssistantService();
+const dbService = new DatabaseService();
 
 /**
  * Chat with AI Assistant
@@ -24,6 +28,17 @@ router.post('/chat', authenticateToken, async (req, res) => {
     logger.info('AI Assistant chat request', { userId, message: message.substring(0, 100) });
 
     const response = await aiAssistant.processRequest(message, userId, context);
+
+    // Persist conversation to history (non-fatal)
+    try {
+      await dbService.pool.query(
+        `INSERT INTO conversation_history (user_id, message, response, created_at)
+         VALUES ($1, $2, $3, NOW())`,
+        [userId, message, JSON.stringify(response)]
+      );
+    } catch (historyError) {
+      logger.warn('Failed to save conversation history:', historyError.message);
+    }
 
     res.json(response);
   } catch (error) {
@@ -93,15 +108,20 @@ router.get('/capabilities', authenticateToken, async (req, res) => {
 router.get('/history', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { limit = 20 } = req.query;
+    const limit = Math.min(parseInt(req.query.limit) || 20, 100);
 
-    // This would fetch from a conversation history table
-    // For now, return empty array
-    const history = [];
+    const result = await dbService.pool.query(
+      `SELECT id, message, response, created_at
+       FROM conversation_history
+       WHERE user_id = $1
+       ORDER BY created_at DESC
+       LIMIT $2`,
+      [userId, limit]
+    );
 
     res.json({
-      conversations: history,
-      total: history.length
+      conversations: result.rows,
+      total: result.rows.length
     });
   } catch (error) {
     logger.error('AI history error:', error);

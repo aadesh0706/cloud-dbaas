@@ -1,10 +1,11 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { useQuery } from 'react-query'
-import { ArrowLeftIcon, CircleStackIcon, PlusIcon } from '@heroicons/react/24/outline'
+import { useQuery, useMutation, useQueryClient } from 'react-query'
+import { ArrowLeftIcon, CircleStackIcon, PlusIcon, PencilIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { projectsAPI } from '../services/api'
 import LoadingSpinner from '../components/LoadingSpinner'
 import DatabaseCard from '../components/DatabaseCard'
+import toast from 'react-hot-toast'
 
 const ProjectDetail = () => {
   const { id } = useParams()
@@ -23,6 +24,51 @@ const ProjectDetail = () => {
 
   const project = response?.project
   const stats = statsResponse?.stats
+  const queryClient = useQueryClient()
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editForm, setEditForm] = useState({ name: '', description: '', tags: [] })
+  const [tagInput, setTagInput] = useState('')
+
+  const updateMutation = useMutation(
+    (data) => projectsAPI.update(id, data),
+    {
+      onSuccess: () => {
+        toast.success('Project updated successfully')
+        queryClient.invalidateQueries(['project', id])
+        setShowEditModal(false)
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || 'Failed to update project')
+      }
+    }
+  )
+
+  const openEdit = () => {
+    setEditForm({
+      name: project.name,
+      description: project.description || '',
+      tags: project.tags ? [...project.tags] : []
+    })
+    setTagInput('')
+    setShowEditModal(true)
+  }
+
+  const handleEditSubmit = (e) => {
+    e.preventDefault()
+    updateMutation.mutate(editForm)
+  }
+
+  const addTag = () => {
+    const t = tagInput.trim()
+    if (t && !editForm.tags.includes(t) && editForm.tags.length < 10) {
+      setEditForm(f => ({ ...f, tags: [...f.tags, t] }))
+      setTagInput('')
+    }
+  }
+
+  const removeTag = (tag) => {
+    setEditForm(f => ({ ...f, tags: f.tags.filter(t => t !== tag) }))
+  }
 
   if (isLoading) {
     return (
@@ -63,14 +109,20 @@ const ProjectDetail = () => {
           </div>
         </div>
 
-        <Link
-          to="/databases/new"
-          state={{ projectId: project.id }}
-          className="btn-primary px-4 py-2"
-        >
-          <PlusIcon className="w-4 h-4 mr-2" />
-          Add Database
-        </Link>
+        <div className="flex items-center space-x-3">
+          <button onClick={openEdit} className="btn-secondary px-4 py-2">
+            <PencilIcon className="w-4 h-4 mr-2" />
+            Edit Project
+          </button>
+          <Link
+            to="/databases/new"
+            state={{ projectId: project.id }}
+            className="btn-primary px-4 py-2"
+          >
+            <PlusIcon className="w-4 h-4 mr-2" />
+            Add Database
+          </Link>
+        </div>
       </div>
 
       {/* Tags */}
@@ -245,6 +297,68 @@ const ProjectDetail = () => {
           )}
         </div>
       </div>
+      {/* Edit Project Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Edit Project</h2>
+              <button onClick={() => setShowEditModal(false)} className="text-gray-400 hover:text-gray-600">
+                <XMarkIcon className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Project Name</label>
+                <input
+                  type="text" required minLength={3} maxLength={50}
+                  value={editForm.name}
+                  onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  rows={3} maxLength={500}
+                  value={editForm.description}
+                  onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+                <div className="flex space-x-2">
+                  <input
+                    type="text" placeholder="Add a tag..."
+                    value={tagInput}
+                    onChange={e => setTagInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag() } }}
+                    className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  />
+                  <button type="button" onClick={addTag} className="btn-secondary px-3 py-2 text-sm">Add</button>
+                </div>
+                {editForm.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {editForm.tags.map((tag, i) => (
+                      <span key={i} className="inline-flex items-center px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                        {tag}
+                        <button type="button" onClick={() => removeTag(tag)} className="ml-1 text-blue-600 hover:text-blue-900">&times;</button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-end space-x-3 pt-2">
+                <button type="button" onClick={() => setShowEditModal(false)} className="btn-secondary px-4 py-2">Cancel</button>
+                <button type="submit" disabled={updateMutation.isLoading} className="btn-primary px-4 py-2">
+                  {updateMutation.isLoading ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

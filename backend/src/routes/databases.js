@@ -21,7 +21,7 @@ const relationshipStoryService = new RelationshipStoryService();
 // Validation schemas
 const createDatabaseSchema = Joi.object({
   name: Joi.string().alphanum().min(3).max(30).required(),
-  engine: Joi.string().valid('mysql', 'postgresql', 'mongodb').required(),
+  engine: Joi.string().valid('mysql', 'postgresql', 'mongodb', 'redis').required(),
   version: Joi.string().required(),
   storage: Joi.number().min(1).max(100).required(), // GB
   cpu: Joi.number().min(0.1).max(4).required(), // CPU cores

@@ -14,6 +14,7 @@ import api from '../services/api';
 
 const PerformanceAnalysis = () => {
   const { user } = useAuth();
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const [databases, setDatabases] = useState([]);
   const [selectedDatabase, setSelectedDatabase] = useState(null);
   const [benchmarkResults, setBenchmarkResults] = useState(null);
@@ -148,7 +149,7 @@ const PerformanceAnalysis = () => {
     const pollMetrics = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:5000/api/performance/databases/${selectedDatabase.id}/metrics/realtime`, {
+        const response = await fetch(`${API_BASE_URL}/api/performance/databases/${selectedDatabase.id}/metrics/realtime`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -194,7 +195,7 @@ const PerformanceAnalysis = () => {
     }
 
     const token = localStorage.getItem('token');
-    const streamUrl = `http://localhost:5000/api/performance/databases/${selectedDatabase.id}/performance/stream?token=${encodeURIComponent(token)}`;
+    const streamUrl = `${API_BASE_URL}/api/performance/databases/${selectedDatabase.id}/performance/stream?token=${encodeURIComponent(token)}`;
     console.log('🔥 Stream URL:', streamUrl);
     
     // Close existing connection if any

@@ -29,6 +29,8 @@ const DatabaseDetail = () => {
   const [showConnectionModal, setShowConnectionModal] = useState(false)
   const [connectionData, setConnectionData] = useState(null)
   const [activeTab, setActiveTab] = useState('overview')
+  const [showScaleModal, setShowScaleModal] = useState(false)
+  const [scaleForm, setScaleForm] = useState({ cpu: '', memory: '', storage: '', replicas: '' })
 
   // Fetch database details
   const { data: response, isLoading } = useQuery(
@@ -80,6 +82,35 @@ const DatabaseDetail = () => {
     if (window.confirm(`Are you sure you want to delete "${database.name}"? This action cannot be undone.`)) {
       deleteMutation.mutate()
     }
+  }
+
+  const scaleMutation = useMutation(
+    (scaleData) => databasesAPI.scale(id, scaleData),
+    {
+      onSuccess: () => {
+        toast.success('Database scaling initiated')
+        queryClient.invalidateQueries(['database', id])
+        setShowScaleModal(false)
+        setScaleForm({ cpu: '', memory: '', storage: '', replicas: '' })
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || 'Failed to scale database')
+      }
+    }
+  )
+
+  const handleScale = (e) => {
+    e.preventDefault()
+    const payload = {}
+    if (scaleForm.cpu)      payload.cpu      = parseFloat(scaleForm.cpu)
+    if (scaleForm.memory)   payload.memory   = parseInt(scaleForm.memory, 10)
+    if (scaleForm.storage)  payload.storage  = parseInt(scaleForm.storage, 10)
+    if (scaleForm.replicas) payload.replicas = parseInt(scaleForm.replicas, 10)
+    if (Object.keys(payload).length === 0) {
+      toast.error('Please fill in at least one field to scale')
+      return
+    }
+    scaleMutation.mutate(payload)
   }
 
   if (isLoading) {
@@ -141,6 +172,21 @@ const DatabaseDetail = () => {
           >
             <LinkIcon className="w-4 h-4 mr-2" />
             {connectionMutation.isLoading ? 'Getting...' : 'Get Connection'}
+          </button>
+          <button
+            onClick={() => {
+              setScaleForm({
+                cpu: database.cpu || '',
+                memory: database.memory || '',
+                storage: database.storage || '',
+                replicas: database.replicas || ''
+              })
+              setShowScaleModal(true)
+            }}
+            className="btn-secondary px-4 py-2"
+          >
+            <CpuChipIcon className="w-4 h-4 mr-2" />
+            Scale
           </button>
           <button
             onClick={handleDelete}
@@ -359,6 +405,73 @@ const DatabaseDetail = () => {
           database={database}
           connectionData={connectionData}
         />
+      )}
+
+      {/* Scale Modal */}
+      {showScaleModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Scale Database</h2>
+              <button onClick={() => setShowScaleModal(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              Adjust resources for <strong>{database.name}</strong>. Leave a field unchanged to keep its current value.
+            </p>
+            <form onSubmit={handleScale} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">CPU (cores)</label>
+                  <input
+                    type="number" step="0.1" min="0.1" max="4"
+                    value={scaleForm.cpu}
+                    onChange={e => setScaleForm(f => ({ ...f, cpu: e.target.value }))}
+                    placeholder={`Current: ${database.cpu}`}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Memory (MB)</label>
+                  <input
+                    type="number" step="128" min="128" max="8192"
+                    value={scaleForm.memory}
+                    onChange={e => setScaleForm(f => ({ ...f, memory: e.target.value }))}
+                    placeholder={`Current: ${database.memory}`}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Storage (GB)</label>
+                  <input
+                    type="number" step="1" min="1" max="100"
+                    value={scaleForm.storage}
+                    onChange={e => setScaleForm(f => ({ ...f, storage: e.target.value }))}
+                    placeholder={`Current: ${database.storage}`}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Replicas</label>
+                  <input
+                    type="number" step="1" min="1" max="5"
+                    value={scaleForm.replicas}
+                    onChange={e => setScaleForm(f => ({ ...f, replicas: e.target.value }))}
+                    placeholder={`Current: ${database.replicas}`}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3 pt-2">
+                <button type="button" onClick={() => setShowScaleModal(false)} className="btn-secondary px-4 py-2">
+                  Cancel
+                </button>
+                <button type="submit" disabled={scaleMutation.isLoading} className="btn-primary px-4 py-2">
+                  {scaleMutation.isLoading ? 'Scaling...' : 'Apply Scale'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   )

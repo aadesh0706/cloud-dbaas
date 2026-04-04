@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS projects (
 CREATE TABLE IF NOT EXISTS databases (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(50) NOT NULL,
-    engine VARCHAR(20) NOT NULL CHECK (engine IN ('mysql', 'postgresql', 'mongodb')),
+    engine VARCHAR(20) NOT NULL CHECK (engine IN ('mysql', 'postgresql', 'mongodb', 'redis')),
     version VARCHAR(20) NOT NULL,
     storage_gb INTEGER NOT NULL,
     cpu_cores DECIMAL(3,1) NOT NULL,
@@ -64,6 +64,28 @@ CREATE TABLE IF NOT EXISTS database_metrics (
     timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Create conversation history table for AI Assistant
+CREATE TABLE IF NOT EXISTS conversation_history (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    message TEXT NOT NULL,
+    response JSONB NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create database backups table for persistent backup storage
+CREATE TABLE IF NOT EXISTS database_backups (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    database_id UUID NOT NULL REFERENCES databases(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    type VARCHAR(20) NOT NULL CHECK (type IN ('full', 'schema', 'data')),
+    status VARCHAR(20) NOT NULL DEFAULT 'in_progress' CHECK (status IN ('in_progress', 'completed', 'failed', 'restoring')),
+    size_mb DECIMAL(10,2),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    completed_at TIMESTAMP WITH TIME ZONE,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL
+);
+
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
@@ -75,6 +97,11 @@ CREATE INDEX IF NOT EXISTS idx_temp_credentials_database_id ON temp_credentials(
 CREATE INDEX IF NOT EXISTS idx_temp_credentials_expires_at ON temp_credentials(expires_at);
 CREATE INDEX IF NOT EXISTS idx_database_metrics_database_id ON database_metrics(database_id);
 CREATE INDEX IF NOT EXISTS idx_database_metrics_timestamp ON database_metrics(timestamp);
+CREATE INDEX IF NOT EXISTS idx_conversation_history_user_id ON conversation_history(user_id);
+CREATE INDEX IF NOT EXISTS idx_conversation_history_created_at ON conversation_history(created_at);
+CREATE INDEX IF NOT EXISTS idx_database_backups_user_id ON database_backups(user_id);
+CREATE INDEX IF NOT EXISTS idx_database_backups_database_id ON database_backups(database_id);
+CREATE INDEX IF NOT EXISTS idx_database_backups_created_at ON database_backups(created_at);
 
 -- Create trigger for updating updated_at column
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -120,3 +147,7 @@ BEGIN
     DELETE FROM database_metrics WHERE timestamp < NOW() - INTERVAL '7 days';
 END;
 $$ language 'plpgsql';
+
+-- Migration: update engine CHECK constraint on existing databases (idempotent)
+ALTER TABLE databases DROP CONSTRAINT IF EXISTS databases_engine_check;
+ALTER TABLE databases ADD CONSTRAINT databases_engine_check CHECK (engine IN ('mysql', 'postgresql', 'mongodb', 'redis'));

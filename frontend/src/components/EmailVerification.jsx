@@ -34,7 +34,7 @@ const EmailVerification = ({ email, onVerificationSuccess, onBackToRegister }) =
 
   const handleInputChange = (index, value) => {
     // Only allow numbers
-    if (!/^\\d*$/.test(value)) return
+    if (!/^\d*$/.test(value)) return
 
     const newOtp = [...otp]
     newOtp[index] = value
@@ -66,7 +66,7 @@ const EmailVerification = ({ email, onVerificationSuccess, onBackToRegister }) =
 
   const handlePaste = (e) => {
     e.preventDefault()
-    const pastedData = e.clipboardData.getData('text/plain').replace(/\\D/g, '').slice(0, 6)
+    const pastedData = e.clipboardData.getData('text/plain').replace(/\D/g, '').slice(0, 6)
     
     if (pastedData.length === 6) {
       const newOtp = pastedData.split('')
