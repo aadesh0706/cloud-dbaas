@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "installCommand": "if [ -d frontend ]; then (cd frontend && npm install); else npm install; fi",
+  "buildCommand": "if [ -d frontend ]; then (cd frontend && npm run build && rm -rf ../build && cp -r build ../build); else npm run build; fi",
+  "outputDirectory": "build",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
