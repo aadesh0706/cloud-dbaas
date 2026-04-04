@@ -189,6 +189,7 @@ app.listen(PORT, async () => {
   
   // Run database initialization (creates tables if they don't exist)
   await initDatabase();
+  
   logger.info('✅ Database schema initialized');
   
   // Initialize cleanup service
