@@ -8,7 +8,7 @@ A comprehensive, production-ready Database-as-a-Service platform that enables us
 ![AI Powered](https://img.shields.io/badge/AI-Powered-purple)
 ![Real Time](https://img.shields.io/badge/Real--Time-Monitoring-orange)
 ![Multi Database](https://img.shields.io/badge/Multi--Database-Support-red)
-![License](https://img.shields.io/badge/License-MIT-green)
+
 
 ## ✨ What Makes This Special?
 
@@ -936,21 +936,7 @@ postgresql://postgres:postgres_password@localhost:5432/testdb
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for complete details.
-
-```
-MIT License
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-```
+This project is licensed and not allowed to use any of the project functions methods or any related things without any permission into any other permission. If done then it may be lead any violation breaks. 
 
 ## 🙏 Acknowledgments
 
