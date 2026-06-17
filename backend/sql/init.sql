@@ -139,6 +139,35 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+-- Anomaly Detection: statistical baselines per table/column
+CREATE TABLE IF NOT EXISTS anomaly_baselines (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    database_id UUID NOT NULL REFERENCES databases(id) ON DELETE CASCADE,
+    table_name VARCHAR(100) NOT NULL,
+    column_name VARCHAR(100) NOT NULL DEFAULT '__volume__',
+    baseline_stats JSONB,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(database_id, table_name, column_name)
+);
+CREATE INDEX IF NOT EXISTS idx_anomaly_baselines_db ON anomaly_baselines(database_id);
+
+-- Anomaly Detection: detected anomaly events
+CREATE TABLE IF NOT EXISTS detected_anomalies (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    database_id UUID NOT NULL REFERENCES databases(id) ON DELETE CASCADE,
+    table_name VARCHAR(100),
+    column_name VARCHAR(100),
+    anomaly_type VARCHAR(50),
+    severity VARCHAR(10) DEFAULT 'medium',
+    observed_value DECIMAL(20,4),
+    expected_range JSONB,
+    ai_explanation TEXT,
+    is_acknowledged BOOLEAN DEFAULT FALSE,
+    detected_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_detected_anomalies_db ON detected_anomalies(database_id);
+CREATE INDEX IF NOT EXISTS idx_detected_anomalies_time ON detected_anomalies(detected_at DESC);
+
 -- Clean up old metrics (keep last 7 days)
 CREATE OR REPLACE FUNCTION cleanup_old_metrics()
 RETURNS void AS $$

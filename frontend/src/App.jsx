@@ -18,6 +18,7 @@ import Monitoring from './pages/Monitoring'
 import PerformanceAnalysis from './pages/PerformanceAnalysis'
 import CreateDatabase from './pages/CreateDatabase'
 import Backups from './pages/Backups'
+import AnomalyOracle from './pages/AnomalyOracle'
 import LoadingSpinner from './components/LoadingSpinner'
 
 const PageBoundary = ({ children }) => (
@@ -61,6 +62,7 @@ function App() {
               <Route path="monitoring" element={<PageBoundary><Monitoring /></PageBoundary>} />
               <Route path="performance" element={<PageBoundary><PerformanceAnalysis /></PageBoundary>} />
               <Route path="backups" element={<PageBoundary><Backups /></PageBoundary>} />
+              <Route path="anomaly-oracle" element={<PageBoundary><AnomalyOracle /></PageBoundary>} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Route>
           )}

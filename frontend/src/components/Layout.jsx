@@ -1,13 +1,13 @@
 import React, { useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
-import { 
-  HomeIcon, 
-  CircleStackIcon, 
-  FolderIcon, 
+import {
+  HomeIcon,
+  CircleStackIcon,
+  FolderIcon,
   ChartBarIcon,
   CpuChipIcon,
   CloudArrowUpIcon,
-  Cog6ToothIcon,
+  EyeIcon,
   UserCircleIcon,
   ArrowRightOnRectangleIcon,
   Bars3Icon,
@@ -25,6 +25,7 @@ const navigation = [
   { name: 'Monitoring', href: '/monitoring', icon: ChartBarIcon },
   { name: 'Performance', href: '/performance', icon: CpuChipIcon },
   { name: 'Backups', href: '/backups', icon: CloudArrowUpIcon },
+  { name: 'Anomaly Oracle', href: '/anomaly-oracle', icon: EyeIcon },
 ]
 
 const Layout = () => {

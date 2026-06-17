@@ -707,9 +707,12 @@ storage:
       const client = new Client({
         host: process.env.NODE_ENV === 'production' ? `${database.k8s_deployment}-service` : 'postgres',
         port: 5432,
-        user: process.env.POSTGRES_USER || 'postgres',
-        password: process.env.POSTGRES_PASSWORD || 'password',
-        database: database.database || database.name
+        user: process.env.DB_USER || process.env.POSTGRES_USER || 'postgres',
+        password: process.env.DB_PASSWORD || process.env.POSTGRES_PASSWORD || 'postgres123',
+        // In dev, user databases are simulated — connect to the real platform DB instead
+        database: process.env.NODE_ENV !== 'production'
+          ? (process.env.DB_NAME || 'dbaas_platform')
+          : (database.database_name || database.name)
       });
       await client.connect();
       return client;

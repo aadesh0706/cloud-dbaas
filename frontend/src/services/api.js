@@ -105,4 +105,18 @@ export const backupsAPI = {
   restore: (id) => api.post(`/backups/${id}/restore`),
 }
 
+// Anomaly Oracle API
+export const anomalyAPI = {
+  computeBaseline: (dbId) => api.post(`/anomalies/${dbId}/baseline`),
+  scan: (dbId) => api.post(`/anomalies/${dbId}/scan`),
+  getAnomalies: (dbId, page = 1, limit = 20) =>
+    api.get(`/anomalies/${dbId}`, { params: { page, limit } }),
+  getBaselineStatus: (dbId) => api.get(`/anomalies/${dbId}/baseline/status`),
+  acknowledge: (anomalyId) => api.patch(`/anomalies/${anomalyId}/acknowledge`),
+  getStreamUrl: (dbId) => {
+    const token = Cookies.get('authToken')
+    return `${(import.meta.env.VITE_API_URL || 'http://localhost:5000')}/api/anomalies/${dbId}/stream?token=${token}`
+  },
+}
+
 export default api
