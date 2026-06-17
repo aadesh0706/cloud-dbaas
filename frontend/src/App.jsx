@@ -4,6 +4,7 @@ import { useAuth } from './contexts/AuthContext'
 
 import Layout from './components/Layout'
 import ErrorBoundary from './components/ErrorBoundary'
+import ErrorFallback from './components/ErrorFallback'
 import HomePage from './pages/HomePage'
 import AboutPage from './pages/AboutPage'
 import Login from './pages/Login'
@@ -18,6 +19,10 @@ import PerformanceAnalysis from './pages/PerformanceAnalysis'
 import CreateDatabase from './pages/CreateDatabase'
 import Backups from './pages/Backups'
 import LoadingSpinner from './components/LoadingSpinner'
+
+const PageBoundary = ({ children }) => (
+  <ErrorBoundary FallbackComponent={ErrorFallback}>{children}</ErrorBoundary>
+)
 
 function App() {
   const { user, loading } = useAuth()
@@ -47,15 +52,15 @@ function App() {
             // Protected routes
             <Route path="/" element={<Layout />}>
               <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="databases" element={<Databases />} />
-              <Route path="databases/new" element={<CreateDatabase />} />
-              <Route path="databases/:id" element={<DatabaseDetail />} />
-              <Route path="projects" element={<Projects />} />
-              <Route path="projects/:id" element={<ProjectDetail />} />
-              <Route path="monitoring" element={<Monitoring />} />
-              <Route path="performance" element={<PerformanceAnalysis />} />
-              <Route path="backups" element={<Backups />} />
+              <Route path="dashboard" element={<PageBoundary><Dashboard /></PageBoundary>} />
+              <Route path="databases" element={<PageBoundary><Databases /></PageBoundary>} />
+              <Route path="databases/new" element={<PageBoundary><CreateDatabase /></PageBoundary>} />
+              <Route path="databases/:id" element={<PageBoundary><DatabaseDetail /></PageBoundary>} />
+              <Route path="projects" element={<PageBoundary><Projects /></PageBoundary>} />
+              <Route path="projects/:id" element={<PageBoundary><ProjectDetail /></PageBoundary>} />
+              <Route path="monitoring" element={<PageBoundary><Monitoring /></PageBoundary>} />
+              <Route path="performance" element={<PageBoundary><PerformanceAnalysis /></PageBoundary>} />
+              <Route path="backups" element={<PageBoundary><Backups /></PageBoundary>} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Route>
           )}

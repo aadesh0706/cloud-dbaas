@@ -1,19 +1,13 @@
-const { Pool } = require('pg');
 const k8s = require('@kubernetes/client-node');
 const yaml = require('yaml');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const logger = require('../utils/logger');
+const pool = require('../utils/db');
 
 class DatabaseService {
   constructor() {
-    this.pool = new Pool({
-      host: process.env.DB_HOST,
-      port: process.env.DB_PORT,
-      database: process.env.DB_NAME,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-    });
+    this.pool = pool;
 
     // Initialize Kubernetes client only in production
     if (process.env.NODE_ENV === 'production') {
@@ -611,21 +605,64 @@ storage:
     return envVars[engine] || [];
   }
 
+  async updateK8sDeployment(database, scaleConfig) {
+    if (!this.useKubernetes) {
+      logger.info(`Development mode: Simulating K8s scale for ${database.name}`);
+      return;
+    }
+    try {
+      const patch = {
+        spec: {
+          replicas: scaleConfig.replicas || database.replicas,
+          template: {
+            spec: {
+              containers: [{
+                name: database.engine,
+                resources: {
+                  requests: {
+                    memory: scaleConfig.memory ? `${scaleConfig.memory}Mi` : undefined,
+                    cpu: scaleConfig.cpu ? `${scaleConfig.cpu * 1000}m` : undefined
+                  },
+                  limits: {
+                    memory: scaleConfig.memory ? `${Math.round(scaleConfig.memory * 1.5)}Mi` : undefined,
+                    cpu: scaleConfig.cpu ? `${Math.round(scaleConfig.cpu * 1.2 * 1000)}m` : undefined
+                  }
+                }
+              }]
+            }
+          }
+        }
+      };
+      await this.k8sAppsV1Api.patchNamespacedDeployment(
+        database.k8s_deployment,
+        database.k8s_namespace,
+        patch,
+        undefined, undefined, undefined, undefined,
+        { headers: { 'Content-Type': 'application/strategic-merge-patch+json' } }
+      );
+      logger.info(`K8s deployment scaled: ${database.k8s_deployment}`);
+    } catch (error) {
+      logger.error('Update K8s deployment error:', error);
+      throw error;
+    }
+  }
+
   getDefaultPort(engine) {
     const ports = {
       mysql: 3306,
       postgresql: 5432,
-      mongodb: 27017
+      mongodb: 27017,
+      redis: 6379
     };
     return ports[engine] || 5432;
   }
 
   getDockerPort(engine) {
-    // Docker host ports for development environment
     const ports = {
-      mysql: 3306,        // mysql-sample container port
-      postgresql: 5432,   // postgres container port  
-      mongodb: 27017      // mongo-sample container port
+      mysql: 3306,
+      postgresql: 5432,
+      mongodb: 27017,
+      redis: 6379
     };
     return ports[engine] || 5432;
   }
@@ -634,7 +671,8 @@ storage:
     const paths = {
       mysql: '/var/lib/mysql',
       postgresql: '/var/lib/postgresql/data',
-      mongodb: '/data/db'
+      mongodb: '/data/db',
+      redis: '/data'
     };
     return paths[engine] || '/data';
   }
@@ -947,6 +985,11 @@ storage:
 
   // Get collection/table data for viewing
   async getCollectionData(database, collectionName, options = {}) {
+    // Validate identifier to prevent SQL injection — only allow alphanumeric, underscore, hyphen
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(collectionName)) {
+      throw new Error('Invalid collection or table name');
+    }
+
     let connection;
     try {
       connection = await this.createDatabaseConnection(database);
@@ -955,7 +998,7 @@ storage:
 
       if (engine === 'mysql') {
         const [rows, fields] = await connection.execute(
-          `SELECT * FROM ${collectionName} LIMIT ${limit} OFFSET ${skip}`
+          `SELECT * FROM \`${collectionName}\` LIMIT ${limit} OFFSET ${skip}`
         );
         return {
           rows: rows || [],
@@ -964,7 +1007,7 @@ storage:
         };
       } else if (engine === 'postgresql') {
         const result = await connection.query(
-          `SELECT * FROM ${collectionName} LIMIT ${limit} OFFSET ${skip}`
+          `SELECT * FROM "${collectionName}" LIMIT ${limit} OFFSET ${skip}`
         );
         return {
           rows: result.rows || [],

@@ -10,8 +10,9 @@ COPY package*.json ./
 # Install dependencies
 RUN npm install
 
-# Copy source code
+# Copy source code and SQL scripts
 COPY src/ ./src/
+COPY sql/ ./sql/
 
 # Create logs directory
 RUN mkdir -p logs

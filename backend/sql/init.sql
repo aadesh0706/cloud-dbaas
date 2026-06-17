@@ -45,6 +45,20 @@ CREATE TABLE IF NOT EXISTS databases (
     deleted_at TIMESTAMP WITH TIME ZONE
 );
 
+-- Create pending_users table (holds registrations awaiting OTP verification)
+CREATE TABLE IF NOT EXISTS pending_users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_pending_users_email ON pending_users(email);
+CREATE INDEX IF NOT EXISTS idx_pending_users_created_at ON pending_users(created_at);
+
 -- Create temporary credentials table
 CREATE TABLE IF NOT EXISTS temp_credentials (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -64,28 +78,6 @@ CREATE TABLE IF NOT EXISTS database_metrics (
     timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Create conversation history table for AI Assistant
-CREATE TABLE IF NOT EXISTS conversation_history (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    message TEXT NOT NULL,
-    response JSONB NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Create database backups table for persistent backup storage
-CREATE TABLE IF NOT EXISTS database_backups (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    database_id UUID NOT NULL REFERENCES databases(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    type VARCHAR(20) NOT NULL CHECK (type IN ('full', 'schema', 'data')),
-    status VARCHAR(20) NOT NULL DEFAULT 'in_progress' CHECK (status IN ('in_progress', 'completed', 'failed', 'restoring')),
-    size_mb DECIMAL(10,2),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    completed_at TIMESTAMP WITH TIME ZONE,
-    expires_at TIMESTAMP WITH TIME ZONE NOT NULL
-);
-
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
@@ -97,11 +89,7 @@ CREATE INDEX IF NOT EXISTS idx_temp_credentials_database_id ON temp_credentials(
 CREATE INDEX IF NOT EXISTS idx_temp_credentials_expires_at ON temp_credentials(expires_at);
 CREATE INDEX IF NOT EXISTS idx_database_metrics_database_id ON database_metrics(database_id);
 CREATE INDEX IF NOT EXISTS idx_database_metrics_timestamp ON database_metrics(timestamp);
-CREATE INDEX IF NOT EXISTS idx_conversation_history_user_id ON conversation_history(user_id);
-CREATE INDEX IF NOT EXISTS idx_conversation_history_created_at ON conversation_history(created_at);
-CREATE INDEX IF NOT EXISTS idx_database_backups_user_id ON database_backups(user_id);
-CREATE INDEX IF NOT EXISTS idx_database_backups_database_id ON database_backups(database_id);
-CREATE INDEX IF NOT EXISTS idx_database_backups_created_at ON database_backups(created_at);
+CREATE INDEX IF NOT EXISTS idx_database_metrics_db_time ON database_metrics(database_id, timestamp DESC);
 
 -- Create trigger for updating updated_at column
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -121,6 +109,17 @@ CREATE TRIGGER update_projects_updated_at BEFORE UPDATE ON projects
 
 CREATE TRIGGER update_databases_updated_at BEFORE UPDATE ON databases
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Migrate existing databases table to allow 'redis' engine (idempotent)
+DO $$
+BEGIN
+  ALTER TABLE databases DROP CONSTRAINT IF EXISTS databases_engine_check;
+  ALTER TABLE databases ADD CONSTRAINT databases_engine_check
+    CHECK (engine IN ('mysql', 'postgresql', 'mongodb', 'redis'));
+EXCEPTION WHEN others THEN
+  NULL;
+END;
+$$;
 
 -- Insert sample data for development
 INSERT INTO users (username, email, password_hash, first_name, last_name) 
@@ -147,7 +146,3 @@ BEGIN
     DELETE FROM database_metrics WHERE timestamp < NOW() - INTERVAL '7 days';
 END;
 $$ language 'plpgsql';
-
--- Migration: update engine CHECK constraint on existing databases (idempotent)
-ALTER TABLE databases DROP CONSTRAINT IF EXISTS databases_engine_check;
-ALTER TABLE databases ADD CONSTRAINT databases_engine_check CHECK (engine IN ('mysql', 'postgresql', 'mongodb', 'redis'));

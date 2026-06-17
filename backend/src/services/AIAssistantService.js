@@ -1,6 +1,6 @@
-// const { Configuration, OpenAIApi } = require('openai');
+const OpenAI = require('openai');
 // Use production DatabaseService in production, development one locally
-const DatabaseService = process.env.NODE_ENV === 'production' 
+const DatabaseService = process.env.NODE_ENV === 'production'
   ? require('./DatabaseService.production')
   : require('./DatabaseService');
 
@@ -10,10 +10,11 @@ const { v4: uuidv4 } = require('uuid');
 class AIAssistantService {
   constructor() {
     this.databaseService = new DatabaseService();
-    // For demo purposes, we'll use a mock AI instead of OpenAI
-    // this.openai = new OpenAIApi(new Configuration({
-    //   apiKey: process.env.OPENAI_API_KEY,
-    // }));
+    this.ai = new OpenAI({
+      apiKey: process.env.NVIDIA_API_KEY,
+      baseURL: 'https://integrate.api.nvidia.com/v1',
+    });
+    this.model = 'meta/llama-3.3-70b-instruct';
   }
 
   /**
@@ -53,86 +54,75 @@ class AIAssistantService {
   }
 
   /**
-   * Analyze user intent using mock AI (replace with real AI service)
+   * Analyze user intent using NVIDIA LLM
    */
   async analyzeIntent(userMessage) {
-    // Mock AI analysis - in production, use OpenAI or similar
-    const message = userMessage.toLowerCase();
-    
-    if (message.includes('create') && (message.includes('database') || message.includes('db'))) {
-      let engine = 'mysql'; // default
-      if (message.includes('postgres') || message.includes('postgresql')) engine = 'postgresql';
-      if (message.includes('mongo') || message.includes('mongodb')) engine = 'mongodb';
-      if (message.includes('redis')) engine = 'redis';
-      
-      let purpose = 'general';
-      if (message.includes('blog')) purpose = 'blog';
-      if (message.includes('ecommerce') || message.includes('store') || message.includes('shop')) purpose = 'ecommerce';
-      if (message.includes('analytics')) purpose = 'analytics';
-      
-      return {
-        action: 'create_database',
-        parameters: { engine, purpose },
-        confidence: 0.9
-      };
-    }
-    
-    if (message.includes('show') || message.includes('view') || message.includes('schema')) {
-      return {
-        action: 'view_schema',
-        parameters: { table: this.extractTableName(message) },
-        confidence: 0.8
-      };
-    }
-    
-    if (message.includes('connect') || message.includes('connection')) {
-      let language = 'nodejs'; // default
-      if (message.includes('python')) language = 'python';
-      if (message.includes('java')) language = 'java';
-      if (message.includes('php')) language = 'php';
-      
-      return {
-        action: 'get_connection',
-        parameters: { language },
-        confidence: 0.8
-      };
-    }
-    
-    if (message.includes('create') && message.includes('project')) {
-      return {
-        action: 'create_project',
-        parameters: { name: `My Project ${Date.now()}` },
-        confidence: 0.85
-      };
+    const systemPrompt = `You are an intent classifier for a Database-as-a-Service platform.
+Analyze the user message and return ONLY a JSON object with this exact structure:
+{
+  "action": "<one of: create_database | create_project | view_schema | query_data | get_connection | optimize_performance | help>",
+  "parameters": {
+    "engine": "<mysql | postgresql | mongodb | redis | null>",
+    "purpose": "<blog | ecommerce | analytics | general | null>",
+    "table": "<table name if mentioned, else null>",
+    "language": "<nodejs | python | java | php | null>",
+    "name": "<project name if mentioned, else null>"
+  },
+  "confidence": <number 0-1>
+}
+Return ONLY the JSON object, no explanation.`;
+
+    try {
+      const response = await this.ai.chat.completions.create({
+        model: this.model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userMessage }
+        ],
+        temperature: 0.1,
+        max_tokens: 200,
+      });
+
+      const raw = response.choices[0]?.message?.content?.trim() || '{}';
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        return {
+          action: parsed.action || 'help',
+          parameters: parsed.parameters || {},
+          confidence: parsed.confidence || 0.5
+        };
+      }
+    } catch (error) {
+      logger.warn('NVIDIA intent analysis failed, falling back to keyword matching:', error.message);
     }
 
-    if (message.includes('query') || message.includes('find') || message.includes('select')) {
-      return {
-        action: 'query_data',
-        parameters: {},
-        confidence: 0.75
-      };
-    }
-
-    if (message.includes('optimize') || message.includes('optimise') || message.includes('performance') || message.includes('slow')) {
-      return {
-        action: 'optimize_performance',
-        parameters: {},
-        confidence: 0.8
-      };
-    }
-
-    return {
-      action: 'help',
-      parameters: {},
-      confidence: 0.5
-    };
+    // Keyword fallback in case the LLM is unreachable
+    return this.analyzeIntentFallback(userMessage);
   }
-  
-  extractTableName(message) {
-    const words = message.split(' ');
-    const tableKeywords = ['users', 'user', 'posts', 'post', 'products', 'product', 'orders', 'order'];
-    return tableKeywords.find(keyword => message.includes(keyword)) || null;
+
+  analyzeIntentFallback(userMessage) {
+    const msg = userMessage.toLowerCase();
+    if (msg.includes('create') && (msg.includes('database') || msg.includes('db'))) {
+      const engine = msg.includes('postgres') ? 'postgresql'
+        : msg.includes('mongo') ? 'mongodb'
+        : msg.includes('redis') ? 'redis' : 'mysql';
+      return { action: 'create_database', parameters: { engine, purpose: 'general' }, confidence: 0.8 };
+    }
+    if (msg.includes('schema') || msg.includes('view') || msg.includes('show')) {
+      return { action: 'view_schema', parameters: {}, confidence: 0.7 };
+    }
+    if (msg.includes('connect') || msg.includes('connection')) {
+      const language = msg.includes('python') ? 'python' : msg.includes('java') ? 'java' : 'nodejs';
+      return { action: 'get_connection', parameters: { language }, confidence: 0.7 };
+    }
+    if (msg.includes('create') && msg.includes('project')) {
+      return { action: 'create_project', parameters: {}, confidence: 0.8 };
+    }
+    if (msg.includes('optimize') || msg.includes('performance') || msg.includes('slow')) {
+      return { action: 'optimize_performance', parameters: {}, confidence: 0.7 };
+    }
+    return { action: 'help', parameters: {}, confidence: 0.5 };
   }
 
   /**
@@ -539,15 +529,32 @@ print(results)`
   }
 
   /**
-   * Enhance schema with AI descriptions
+   * Enhance schema with AI descriptions via NVIDIA LLM
    */
   async enhanceSchemaWithAI(schema, engine) {
-    // Add intelligent descriptions to tables and columns
-    // This would use AI to analyze table/column names and provide insights
-    return {
-      ...schema,
-      ai_insights: "This schema appears to be for a typical web application with user management."
-    };
+    try {
+      const tableNames = (schema.tables || []).map(t => t.name).join(', ');
+      const response = await this.ai.chat.completions.create({
+        model: this.model,
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a database expert. Analyze the table names and provide a concise 1-2 sentence insight about what this schema is likely used for. Be direct and specific.'
+          },
+          {
+            role: 'user',
+            content: `${engine} database with tables: ${tableNames || '(none yet)'}`
+          }
+        ],
+        temperature: 0.3,
+        max_tokens: 150,
+      });
+      const insight = response.choices[0]?.message?.content?.trim() || '';
+      return { ...schema, ai_insights: insight };
+    } catch (error) {
+      logger.warn('Schema AI enhancement failed:', error.message);
+      return { ...schema, ai_insights: `${engine} database schema with ${(schema.tables || []).length} table(s).` };
+    }
   }
 
   /**
@@ -805,27 +812,40 @@ print('Insert result:', result.inserted_id)`;
   }
 
   /**
-   * Generate helpful response for unclear requests
+   * Generate a natural language help response via NVIDIA LLM
    */
   async generateHelpResponse(userMessage) {
-    return {
-      success: true,
-      message: "I can help you with:",
-      capabilities: [
-        "🗄️ Create databases (MySQL, PostgreSQL, MongoDB)",
-        "📋 View database schemas and table structures", 
-        "🔍 Query your data with natural language",
-        "🔗 Generate connection strings and code examples",
-        "⚡ Optimize database performance",
-        "📊 Create and manage projects"
-      ],
-      examples: [
-        "Create a MySQL database for my blog",
-        "Show me the schema of my users table",
-        "How do I connect to my database from Node.js?",
-        "Find all users who registered this month"
-      ]
-    };
+    const capabilities = [
+      'Create databases (MySQL, PostgreSQL, MongoDB, Redis)',
+      'View database schemas and table structures',
+      'Generate connection strings and code examples in Node.js, Python, Java, PHP',
+      'Optimize database performance with engine-specific tips',
+      'Create and manage projects'
+    ];
+
+    try {
+      const response = await this.ai.chat.completions.create({
+        model: this.model,
+        messages: [
+          {
+            role: 'system',
+            content: `You are a helpful assistant for a Database-as-a-Service platform. You help users manage MySQL, PostgreSQL, MongoDB, and Redis databases. You can: ${capabilities.join('; ')}. Keep responses concise and friendly.`
+          },
+          { role: 'user', content: userMessage }
+        ],
+        temperature: 0.6,
+        max_tokens: 400,
+      });
+      const reply = response.choices[0]?.message?.content?.trim() || '';
+      return { success: true, message: reply, capabilities };
+    } catch (error) {
+      logger.warn('NVIDIA help response failed:', error.message);
+      return {
+        success: true,
+        message: 'I can help you with your databases. Try asking me to create a database, show a schema, or generate connection code.',
+        capabilities
+      };
+    }
   }
 }
 

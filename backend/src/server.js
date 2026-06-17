@@ -4,7 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
-const { Pool } = require('pg');
+const client = require('prom-client');
 
 const authRoutes = require('./routes/auth');
 const databaseRoutes = require('./routes/databases');
@@ -19,6 +19,24 @@ const errorHandler = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
 const CleanupService = require('./services/CleanupService');
 const initDatabase = require('./utils/initDatabase');
+
+// Prometheus metrics setup
+const register = new client.Registry();
+client.collectDefaultMetrics({ register });
+
+const httpRequestsTotal = new client.Counter({
+  name: 'http_requests_total',
+  help: 'Total number of HTTP requests',
+  labelNames: ['method', 'route', 'status'],
+  registers: [register],
+});
+
+const dbOperationsTotal = new client.Counter({
+  name: 'database_operations_total',
+  help: 'Total number of database operations',
+  labelNames: ['operation', 'status'],
+  registers: [register],
+});
 
 const app = express();
 
@@ -56,6 +74,15 @@ app.use(morgan('combined', {
   stream: { write: message => logger.info(message.trim()) }
 }));
 
+// Track HTTP requests for Prometheus
+app.use((req, res, next) => {
+  res.on('finish', () => {
+    const route = req.route ? req.route.path : req.path;
+    httpRequestsTotal.inc({ method: req.method, route, status: res.statusCode });
+  });
+  next();
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({
@@ -65,90 +92,10 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Environment variables test endpoint
-app.get('/env-test', (req, res) => {
-  res.json({
-    status: 'success',
-    environment: process.env.NODE_ENV,
-    dbConfig: {
-      host: process.env.DB_HOST ? 'SET' : 'NOT_SET',
-      port: process.env.DB_PORT ? 'SET' : 'NOT_SET',
-      database: process.env.DB_NAME ? 'SET' : 'NOT_SET',
-      user: process.env.DB_USER ? 'SET' : 'NOT_SET',
-      password: process.env.DB_PASSWORD ? 'SET' : 'NOT_SET',
-      jwtSecret: process.env.JWT_SECRET ? 'SET' : 'NOT_SET',
-      corsOrigin: process.env.CORS_ORIGIN || 'NOT_SET'
-    }
-  });
-});
-
-// Database connectivity test endpoint
-app.get('/db-test', async (req, res) => {
-  try {
-    // Simple test without pool management
-    const pool = new Pool({
-      host: process.env.DB_HOST,
-      port: parseInt(process.env.DB_PORT) || 5432,
-      database: process.env.DB_NAME,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      ssl: { rejectUnauthorized: false }
-    });
-    
-    const result = await pool.query('SELECT NOW() as current_time');
-    await pool.end();
-    
-    res.json({
-      status: 'success',
-      message: 'Database connection successful',
-      timestamp: result.rows[0].current_time,
-      config: {
-        host: process.env.DB_HOST,
-        port: process.env.DB_PORT,
-        database: process.env.DB_NAME,
-        user: process.env.DB_USER,
-        passwordSet: !!process.env.DB_PASSWORD
-      }
-    });
-  } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      message: 'Database connection failed',
-      error: error.message,
-      stack: error.stack,
-      config: {
-        host: process.env.DB_HOST,
-        port: process.env.DB_PORT,
-        database: process.env.DB_NAME,
-        user: process.env.DB_USER,
-        passwordSet: !!process.env.DB_PASSWORD
-      }
-    });
-  }
-});
-
-// Simple metrics endpoint for Prometheus
-app.get('/metrics', (req, res) => {
-  const metrics = `# HELP http_requests_total Total HTTP requests
-# TYPE http_requests_total counter
-http_requests_total 100
-
-# HELP backend_uptime_seconds Backend uptime in seconds
-# TYPE backend_uptime_seconds gauge
-backend_uptime_seconds ${process.uptime()}
-
-# HELP active_connections Current active connections
-# TYPE active_connections gauge
-active_connections 25
-
-# HELP database_operations_total Total database operations
-# TYPE database_operations_total counter
-database_operations_total{operation="create",status="success"} 10
-database_operations_total{operation="create",status="error"} 2
-database_operations_total{operation="delete",status="success"} 5
-`;
-  res.set('Content-Type', 'text/plain');
-  res.send(metrics);
+// Prometheus metrics endpoint
+app.get('/metrics', async (req, res) => {
+  res.set('Content-Type', register.contentType);
+  res.send(await register.metrics());
 });
 
 // API routes
@@ -183,19 +130,20 @@ process.on('SIGINT', () => {
   process.exit(0);
 });
 
-app.listen(PORT, async () => {
-  logger.info(`🚀 DBaaS Backend Server running on port ${PORT}`);
-  logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  
-  // Run database initialization (creates tables if they don't exist)
-  await initDatabase();
-  
-  logger.info('✅ Database schema initialized');
-  
-  // Initialize cleanup service
-  const cleanupService = new CleanupService();
-  cleanupService.startScheduler();
-  logger.info('✅ Email verification and cleanup services initialized');
-});
+// Only start the HTTP server when this file is run directly (not in tests)
+if (require.main === module) {
+  app.listen(PORT, async () => {
+    logger.info(`🚀 DBaaS Backend Server running on port ${PORT}`);
+    logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+
+    await initDatabase();
+    logger.info('✅ Database schema initialized');
+
+    const cleanupService = new CleanupService();
+    cleanupService.startScheduler();
+    logger.info('✅ Email verification and cleanup services initialized');
+  });
+}
 
 module.exports = app;
+module.exports.dbOperationsTotal = dbOperationsTotal;

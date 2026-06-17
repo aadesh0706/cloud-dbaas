@@ -18,9 +18,27 @@ const router = express.Router();
 const databaseService = new DatabaseService();
 const relationshipStoryService = new RelationshipStoryService();
 
+const SQL_RESERVED = new Set([
+  'select', 'insert', 'update', 'delete', 'drop', 'create', 'alter', 'table',
+  'database', 'schema', 'index', 'view', 'trigger', 'procedure', 'function',
+  'user', 'role', 'grant', 'revoke', 'commit', 'rollback', 'transaction'
+]);
+
 // Validation schemas
 const createDatabaseSchema = Joi.object({
-  name: Joi.string().alphanum().min(3).max(30).required(),
+  name: Joi.string()
+    .pattern(/^[a-z][a-z0-9_]{2,29}$/)
+    .custom((value, helpers) => {
+      if (SQL_RESERVED.has(value.toLowerCase())) {
+        return helpers.error('any.invalid');
+      }
+      return value;
+    })
+    .messages({
+      'string.pattern.base': 'Database name must start with a lowercase letter and contain only lowercase letters, numbers, and underscores (3-30 chars)',
+      'any.invalid': 'Database name cannot be a reserved SQL keyword'
+    })
+    .required(),
   engine: Joi.string().valid('mysql', 'postgresql', 'mongodb', 'redis').required(),
   version: Joi.string().required(),
   storage: Joi.number().min(1).max(100).required(), // GB

@@ -2,26 +2,18 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Joi = require('joi');
-const { Pool } = require('pg');
 const rateLimit = require('express-rate-limit');
 const logger = require('../utils/logger');
 const EmailService = require('../services/EmailService');
 const OTPService = require('../services/OTPService');
+
+const pool = require('../utils/db');
 
 const router = express.Router();
 
 // Initialize services
 const emailService = new EmailService();
 const otpService = new OTPService();
-
-// Database connection
-const pool = new Pool({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  database: process.env.DB_NAME,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-});
 
 // Rate limiting for auth routes
 const authLimiter = rateLimit({
@@ -31,9 +23,8 @@ const authLimiter = rateLimit({
   skip: (req) => process.env.NODE_ENV === 'development' // Skip rate limiting in development
 });
 
-// For development, create a no-op middleware
 const developmentLimiter = (req, res, next) => {
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
     return next();
   }
   return authLimiter(req, res, next);
@@ -43,7 +34,12 @@ const developmentLimiter = (req, res, next) => {
 const registerSchema = Joi.object({
   username: Joi.string().alphanum().min(3).max(30).required(),
   email: Joi.string().email().required(),
-  password: Joi.string().min(8).required(),
+  password: Joi.string().min(8).max(128)
+    .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+    .messages({
+      'string.pattern.base': 'Password must contain at least one uppercase letter, one lowercase letter, and one number'
+    })
+    .required(),
   firstName: Joi.string().min(2).max(50).required(),
   lastName: Joi.string().min(2).max(50).required()
 });
@@ -196,15 +192,16 @@ router.post('/verify-otp', developmentLimiter, async (req, res) => {
       // Send welcome email
       await emailService.sendWelcomeEmail(email, `${user.first_name} ${user.last_name}`);
 
-      // Generate JWT token
+      // Generate JWT tokens
       const token = jwt.sign(
-        { 
-          userId: user.id, 
-          username: user.username,
-          email: user.email
-        },
+        { userId: user.id, username: user.username, email: user.email },
         process.env.JWT_SECRET,
-        { expiresIn: '24h' }
+        { expiresIn: '1h' }
+      );
+      const refreshToken = jwt.sign(
+        { userId: user.id, type: 'refresh' },
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' }
       );
 
       logger.info(`User registration completed and verified: ${email}`);
@@ -220,7 +217,8 @@ router.post('/verify-otp', developmentLimiter, async (req, res) => {
           createdAt: user.created_at,
           emailVerified: true
         },
-        token
+        token,
+        refreshToken
       });
 
     } catch (dbError) {
@@ -363,15 +361,16 @@ router.post('/login', developmentLimiter, async (req, res) => {
       [user.id]
     );
 
-    // Generate JWT token
+    // Generate JWT tokens
     const token = jwt.sign(
-      { 
-        userId: user.id, 
-        username: user.username,
-        email: user.email
-      },
+      { userId: user.id, username: user.username, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: '1h' }
+    );
+    const refreshToken = jwt.sign(
+      { userId: user.id, type: 'refresh' },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
     );
 
     logger.info(`User logged in: ${email}`);
@@ -386,7 +385,8 @@ router.post('/login', developmentLimiter, async (req, res) => {
         lastName: user.last_name,
         emailVerified: true
       },
-      token
+      token,
+      refreshToken
     });
 
   } catch (error) {
@@ -395,6 +395,48 @@ router.post('/login', developmentLimiter, async (req, res) => {
       error: 'Internal Server Error',
       message: 'Failed to authenticate user'
     });
+  }
+});
+
+// Refresh access token using a valid refresh token
+router.post('/refresh', async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+      return res.status(400).json({ error: 'Bad Request', message: 'refreshToken is required' });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+    } catch {
+      return res.status(401).json({ error: 'Invalid Token', message: 'Refresh token is invalid or expired' });
+    }
+
+    if (decoded.type !== 'refresh') {
+      return res.status(401).json({ error: 'Invalid Token', message: 'Not a refresh token' });
+    }
+
+    const result = await pool.query(
+      'SELECT id, username, email FROM users WHERE id = $1 AND is_active = true',
+      [decoded.userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: 'User Not Found', message: 'Account no longer exists or is inactive' });
+    }
+
+    const user = result.rows[0];
+    const newToken = jwt.sign(
+      { userId: user.id, username: user.username, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    res.json({ token: newToken });
+  } catch (error) {
+    logger.error('Refresh token error:', error);
+    res.status(500).json({ error: 'Internal Server Error', message: 'Failed to refresh token' });
   }
 });
 

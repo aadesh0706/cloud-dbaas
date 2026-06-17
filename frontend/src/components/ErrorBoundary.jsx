@@ -5,26 +5,36 @@ class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props)
     this.state = { hasError: false, error: null, errorInfo: null }
+    this.reset = this.reset.bind(this)
   }
 
   static getDerivedStateFromError(error) {
-    return { hasError: true }
+    return { hasError: true, error }
   }
 
   componentDidCatch(error, errorInfo) {
-    this.setState({
-      error: error,
-      errorInfo: errorInfo
-    })
-    
-    // Log error to console in development
+    this.setState({ errorInfo })
     if (import.meta.env.DEV) {
       console.error('ErrorBoundary caught an error:', error, errorInfo)
     }
   }
 
+  reset() {
+    this.setState({ hasError: false, error: null, errorInfo: null })
+  }
+
   render() {
     if (this.state.hasError) {
+      const { FallbackComponent } = this.props
+      if (FallbackComponent) {
+        return (
+          <FallbackComponent
+            error={this.state.error}
+            resetErrorBoundary={this.reset}
+          />
+        )
+      }
+
       return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
           <div className="max-w-md w-full">
@@ -36,7 +46,7 @@ class ErrorBoundary extends React.Component {
               <p className="text-gray-600 mb-6">
                 We're sorry for the inconvenience. The page encountered an unexpected error.
               </p>
-              
+
               {import.meta.env.DEV && this.state.error && (
                 <div className="mb-6 p-4 bg-error-50 border border-error-200 rounded-lg text-left">
                   <details className="text-sm">
@@ -59,16 +69,16 @@ class ErrorBoundary extends React.Component {
                   </details>
                 </div>
               )}
-              
+
               <div className="space-y-3">
                 <button
-                  onClick={() => window.location.reload()}
+                  onClick={this.reset}
                   className="btn-primary w-full py-3"
                 >
-                  Reload Page
+                  Try Again
                 </button>
                 <button
-                  onClick={() => window.location.href = '/dashboard'}
+                  onClick={() => { window.location.href = '/dashboard' }}
                   className="btn-secondary w-full py-3"
                 >
                   Go to Dashboard

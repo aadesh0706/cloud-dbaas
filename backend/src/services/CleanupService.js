@@ -1,16 +1,10 @@
 const cron = require('node-cron');
-const { Pool } = require('pg');
 const logger = require('../utils/logger');
+const pool = require('../utils/db');
 
 class CleanupService {
   constructor() {
-    this.pool = new Pool({
-      host: process.env.DB_HOST,
-      port: process.env.DB_PORT,
-      database: process.env.DB_NAME,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-    });
+    this.pool = pool;
   }
 
   // Clean up expired OTPs and pending users
